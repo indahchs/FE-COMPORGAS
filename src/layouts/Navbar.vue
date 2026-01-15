@@ -2,7 +2,7 @@
   <v-app>
     <v-app-bar style="height: 70px !important" app flat absolute color="white">
       <div class="boxed-container w-full">
-        <div class="d-flex align-center mx-4 navbar-content" style="height: 70px;">
+        <div class="d-flex align-center navbar-content" style="height: 70px;">
           <div class="logo-container" @click="goToHome">
             <img class="logo" src="../assets/images/logos/comporgas.png" alt="Comporgas Logo" />
           </div>
@@ -234,6 +234,7 @@ export default {
 <style lang="scss" scoped>
 .navbar-content {
   position: relative;
+  padding: 0 20px;
 }
 
 .logo-container {
@@ -255,18 +256,21 @@ export default {
 
 .user-menu {
   flex-shrink: 0;
-  gap: 6px;
+  gap: 8px;
+  margin-left: auto;
 }
 
 .mobile-menu-btn {
-  margin-left: 6px;
+  margin-left: 8px;
 }
 
 .custom-tabs {
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: center;
+  gap: 20px;
   height: 50px;
+  flex: 1;
 }
 
 .custom-tab {
@@ -284,8 +288,8 @@ export default {
   border: none;
   outline: none;
   white-space: nowrap;
-  padding: 0 6px;
-  font-size: 13px;
+  padding: 0 8px;
+  font-size: 14px;
 
   &.active {
     color: #0172B9;
@@ -312,7 +316,7 @@ export default {
 }
 
 .mobile-nav-item {
-  padding: 10px 14px;
+  padding: 12px 16px;
   color: #606060;
   cursor: pointer;
   font-weight: 500;
@@ -387,31 +391,30 @@ export default {
 
 @media (max-width: 1400px) {
   .custom-tabs {
+    gap: 16px;
+  }
+
+  .custom-tab {
+    min-width: 65px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .custom-tabs {
     gap: 12px;
   }
 
   .custom-tab {
     min-width: 60px;
     font-size: 12px;
-    padding: 0 4px;
-  }
-}
-
-@media (max-width: 1200px) {
-  .custom-tabs {
-    gap: 8px;
-  }
-
-  .custom-tab {
-    min-width: 50px;
-    font-size: 11px;
-    padding: 0 3px;
+    padding: 0 6px;
   }
 }
 
 @media (max-width: 960px) {
-  .main-container {
-    margin-top: 70px;
+  .navbar-content {
+    padding: 0 12px;
   }
 
   .logo {
@@ -419,39 +422,29 @@ export default {
     height: 38px !important;
   }
 
-  .navbar-content {
-    padding: 0 10px !important;
+  .user-menu {
+    gap: 6px;
   }
 
   .boxed-container {
     max-width: 100%;
     padding: 0 10px;
   }
-
-  .custom-tabs {
-    gap: 12px;
-  }
-
-  .custom-tab {
-    min-width: 70px;
-    font-size: 13px;
-    padding: 0 6px;
-  }
 }
 
 @media (max-width: 768px) {
-  .main-container {
-    margin-top: 120px;
-  }
-
   .navbar-content {
-    padding: 0 10px !important;
+    padding: 0 10px;
     height: 70px !important;
   }
 
   .logo {
     width: 150px !important;
     height: 36px !important;
+  }
+
+  .user-menu {
+    gap: 5px;
   }
 
   .app-content-container {
@@ -478,7 +471,7 @@ export default {
 
 @media (max-width: 600px) {
   .navbar-content {
-    padding: 0 6px !important;
+    padding: 0 8px;
   }
 
   .logo {
@@ -487,17 +480,18 @@ export default {
   }
 
   .user-menu {
-    gap: 3px;
+    gap: 4px;
+  }
+
+  .mobile-menu-btn {
+    margin-left: 4px;
   }
 
   .mobile-nav-content {
     padding: 10px 14px;
   }
 
-  .footer-address {
-    font-size: 13px;
-  }
-
+  .footer-address,
   .footer-email {
     font-size: 13px;
   }
@@ -505,7 +499,7 @@ export default {
 
 @media (max-width: 480px) {
   .navbar-content {
-    padding: 0 4px !important;
+    padding: 0 6px;
   }
 
   .logo {
@@ -531,12 +525,6 @@ export default {
 
   .app-content-container {
     padding: 10px !important;
-  }
-}
-
-@media (max-width: 768px) {
-  .main-container {
-    margin-top: 70px !important;
   }
 }
 
