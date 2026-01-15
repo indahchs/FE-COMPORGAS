@@ -1,7 +1,7 @@
 <template>
   <div style="margin-top: -80px">
     <div class="scaled">
-      <v-row>
+      <v-row class="match-height">
         <v-col cols="12" md="8">
           <v-card>
             <v-card-title class="pa-4 news-header">
@@ -159,10 +159,28 @@ export default {
   opacity: 1;
 }
 
+.match-height {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.match-height>.v-col {
+  display: flex;
+}
+
+.match-height>.v-col>.v-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 .carousel-container {
-  min-height: 400px;
   background-color: #f5f5f5;
   padding: 0 !important;
+  min-height: 0 !important;
+  display: flex;
+  flex-direction: column;
 }
 
 @media (max-width: 768px) {
