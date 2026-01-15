@@ -1,8 +1,8 @@
 <template>
   <v-card class="event-calendar-card">
-    <v-card-title class="pa-4 calendar-header-fixed" style="background: white">
+    <v-card-title class="pa-3 calendar-header-fixed" style="background: white">
       <div class="calendar-title-row">
-        <div class="calendar-title-text text-h5 font-weight-bold primary--text">
+        <div class="calendar-title-text text-subtitle-1 font-weight-bold primary--text">
           {{ currentMonthYear }}
         </div>
 
@@ -51,16 +51,16 @@
       </v-btn>
     </div>
 
-    <div class="calendar-container" style="flex: 1; overflow: hidden">
+    <div class="calendar-container">
       <div class="calendar-header d-flex">
-        <div v-for="day in dayHeaders" :key="day" class="calendar-day-header text-center pa-1"
-          style="flex: 1; font-size: 12px; font-weight: 600; color: #666">
+        <div v-for="day in dayHeaders" :key="day" class="calendar-day-header text-center"
+          style="flex: 1; font-size: 11px; font-weight: 600; color: #666; padding: 4px 2px">
           {{ day }}
         </div>
       </div>
 
-      <div class="calendar-body" style="flex: 1; overflow-y: auto">
-        <div v-for="week in calendarWeeks" :key="week.id" class="d-flex" style="height: 3.2rem">
+      <div class="calendar-body">
+        <div v-for="week in calendarWeeks" :key="week.id" class="d-flex calendar-week">
           <div v-for="day in week.days" :key="day.date" class="calendar-day position-relative"
             style="flex: 1; border: 1px solid #e0e0e0; cursor: pointer" :class="{
               'calendar-day-today': day.isToday,
@@ -69,7 +69,8 @@
               'calendar-day-selected': day.isSelected
             }" @click="selectDateAndShowEvents(day)">
             <div class="pa-1">
-              <div class="text-caption text-center" :class="day.isOtherMonth ? 'grey--text text--lighten-2' : ''">
+              <div class="text-caption text-center day-number"
+                :class="day.isOtherMonth ? 'grey--text text--lighten-2' : ''">
                 {{ day.day }}
               </div>
               <div v-if="day.hasEvent" class="event-indicator primary"></div>
@@ -80,12 +81,13 @@
     </div>
 
     <div class="upcoming-events-blue-section">
-      <div class="text-center mb-4">
+      <div class="text-center mb-2" style="flex-shrink: 0;">
         <h2 class="upcoming-events-title" style="color: white !important;">Upcoming Event</h2>
       </div>
 
-      <div v-if="isLoadingUpcomingEvents" class="text-center py-4">
-        <v-progress-circular color="white" indeterminate size="24"></v-progress-circular>
+      <div v-if="isLoadingUpcomingEvents" class="text-center py-3"
+        style="flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+        <v-progress-circular color="white" indeterminate size="20"></v-progress-circular>
         <div class="no-events-message mt-2">Memuat event...</div>
       </div>
 
@@ -120,7 +122,8 @@
         </div>
       </div>
 
-      <div v-else class="text-center py-4">
+      <div v-else class="text-center py-3"
+        style="flex: 1; display: flex; align-items: center; justify-content: center;">
         <div class="no-events-message">
           Tidak ada event mendatang di {{ selectedAreaText }}
         </div>
@@ -589,6 +592,7 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 1.1rem !important;
 }
 
 .primary-border-left {
@@ -597,15 +601,27 @@ export default {
 
 .calendar-title-select {
   flex: 0 0 auto;
-  width: 180px;
-  min-width: 140px;
+  width: 160px;
+  min-width: 130px;
 }
 
 :deep(.area-select-fixed-new .v-input__control) {
   background-color: #f5f5f5 !important;
   border: 1px solid #e0e0e0 !important;
   border-radius: 8px !important;
-  min-height: 40px !important;
+  min-height: 36px !important;
+}
+
+:deep(.area-select-fixed-new .v-input__slot) {
+  color: #333 !important;
+  padding: 0 8px !important;
+}
+
+:deep(.area-select-fixed-new .v-label),
+:deep(.area-select-fixed-new input),
+:deep(.area-select-fixed-new .v-select__selections) {
+  color: #333 !important;
+  font-size: 13px !important;
 }
 
 :deep(.area-select-fixed-new .v-input__slot) {
@@ -640,20 +656,22 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   display: inline-block;
-  max-width: 100px;
+  max-width: 90px;
   color: #333 !important;
 }
 
 .event-calendar-card {
   display: flex;
   flex-direction: column;
+  height: 100%;
+  min-height: 600px;
 }
 
 .calendar-container {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-height: 0;
+  flex-shrink: 0;
+  padding-bottom: 0.25rem;
 }
 
 .calendar-header {
@@ -662,23 +680,48 @@ export default {
 }
 
 .calendar-day-header {
-  padding: 8px 4px;
+  padding: 6px 2px;
   text-align: center;
   font-weight: 600;
   color: #666;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .calendar-body {
-  flex: 1;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.calendar-week {
+  height: 42px;
+  min-height: 42px;
+  flex-shrink: 0;
 }
 
 .calendar-day {
   border: 1px solid #e0e0e0;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-day .pa-1 {
+  padding: 2px !important;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.day-number {
+  font-size: 11px !important;
+  line-height: 1.2;
 }
 
 .calendar-day:hover {
@@ -721,10 +764,11 @@ export default {
 
 .event-indicator {
   position: absolute;
-  bottom: 2px;
-  right: 2px;
-  width: 6px;
-  height: 6px;
+  bottom: 1px;
+  right: 50%;
+  transform: translateX(50%);
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
 }
 
@@ -739,32 +783,39 @@ export default {
 
 .upcoming-events-blue-section {
   background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-  padding: 24px;
-  border-top: 1px solid #e0e0e0;
+  padding: 16px;
+  border-top: none;
+  margin-top: 0;
   border-bottom-left-radius: 0.5rem;
   border-bottom-right-radius: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .upcoming-events-title {
   color: white !important;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: bold;
   font-style: italic;
   margin: 0;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  flex-shrink: 0;
 }
 
 .upcoming-events-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-height: 160px;
+  gap: 6px;
+  flex: 1;
   overflow-y: auto;
   padding-right: 4px;
+  min-height: 0;
 }
 
 .upcoming-events-list::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 
 .upcoming-events-list::-webkit-scrollbar-track {
@@ -785,8 +836,8 @@ export default {
   display: flex;
   align-items: center;
   background-color: #f5f5f5;
-  border-radius: 8px;
-  padding: 8px;
+  border-radius: 6px;
+  padding: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
   border: 1px solid #e0e0e0;
@@ -801,24 +852,24 @@ export default {
 .event-date-box {
   background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
   color: white;
-  border-radius: 8px;
-  padding: 8px;
+  border-radius: 6px;
+  padding: 6px;
   text-align: center;
-  min-width: 48px;
-  margin-right: 12px;
+  min-width: 40px;
+  margin-right: 10px;
   flex-shrink: 0;
   box-shadow: 0 2px 6px rgba(33, 150, 243, 0.3);
 }
 
 .event-date-number {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: bold;
   line-height: 1;
   margin-bottom: 1px;
 }
 
 .event-date-month {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.3px;
 }
@@ -829,19 +880,22 @@ export default {
 }
 
 .event-title {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: bold;
   color: #333;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
   line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .event-info-line {
   display: flex;
   align-items: center;
   margin-bottom: 2px;
-  font-size: 12px;
-  line-height: 1.3;
+  font-size: 10px;
+  line-height: 1.2;
 }
 
 .event-info-line:last-child {
@@ -851,26 +905,33 @@ export default {
 .info-label {
   font-weight: 600;
   color: #666;
-  min-width: 35px;
+  min-width: 32px;
   flex-shrink: 0;
 }
 
 .info-separator {
-  margin: 0 6px 0 2px;
+  margin: 0 4px 0 2px;
   color: #666;
 }
 
 .info-value {
   color: #555;
   flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .no-events-message {
   color: rgba(255, 255, 255, 0.8);
-  font-size: 16px;
+  font-size: 14px;
 }
 
 @media (max-width: 600px) {
+  .event-calendar-card {
+    min-height: 500px;
+  }
+
   .calendar-title-select {
     width: 140px;
     min-width: 120px;
@@ -886,10 +947,6 @@ export default {
 
   .upcoming-events-title {
     font-size: 20px !important;
-  }
-
-  .upcoming-events-list {
-    max-height: 160px;
   }
 
   .event-date-box {
@@ -912,6 +969,10 @@ export default {
 }
 
 @media (max-width: 480px) {
+  .event-calendar-card {
+    min-height: 450px;
+  }
+
   .calendar-title-row {
     gap: 8px;
   }
@@ -931,10 +992,6 @@ export default {
 
   .upcoming-events-title {
     font-size: 18px !important;
-  }
-
-  .upcoming-events-list {
-    max-height: 160px;
   }
 
   .event-date-box {
