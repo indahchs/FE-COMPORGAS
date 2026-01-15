@@ -5,7 +5,7 @@
         <v-card>
           <v-card-title>
             <v-row align="center">
-              <v-col cols="12" sm="6" md="4" lg="2">
+              <v-col cols="12" sm="12" md="4" lg="2">
                 <v-row align="center">
                   <img class="mx-2 my-2" src="../../assets/images/icons/icon_people_group.png" />
                   <div style="
@@ -18,8 +18,8 @@
                   </div>
                 </v-row>
               </v-col>
-              <v-col cols="12" sm="6" md="4" lg="4">
-                <v-row>
+              <v-col cols="12" sm="12" md="4" lg="4">
+                <v-row >
                   <v-col>
                     <v-autocomplete hide-details dense v-model="officeId" :items="rooms" outlined
                       label="Office"></v-autocomplete>
@@ -30,12 +30,11 @@
                   </v-col>
                 </v-row>
               </v-col>
-              <v-col cols="12" sm="6" md="4" lg="6" class="text-right">
+              <v-col cols="12" sm="12" md="4" lg="6" class="text-right">
                 <v-row justify="end">
                   <v-btn depressed class="btn-blue mx-2" @click="openModal">BOOK ROOM
                   </v-btn>
-                  <v-btn depressed class="btn-white mx-2" @click="goToBooking">{{ isSupported ? "APPROVAL MEETING" : "MY
-                    BOOKING"
+                  <v-btn depressed class="btn-white mx-2" @click="goToBooking">{{ isSupported ? "APPROVAL MEETING" : "MY BOOKING"
                     }}<v-icon right>
                       {{ icons.mdiChevronRight }}
                     </v-icon></v-btn>
