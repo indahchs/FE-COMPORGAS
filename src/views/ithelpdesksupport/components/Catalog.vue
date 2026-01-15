@@ -1,124 +1,128 @@
 <template>
-  <div>
-    <v-card v-if="isList">
-      <v-card-title style="justify-content: right">
-        <v-row
-          ><v-col cols="10"> </v-col>
-          <v-col cols="2">
-            <v-btn class="btn-submit" @click="createCatalog"
-              >CREATE CATALOG</v-btn
-            >
+  <div class="catalog-container">
+    <v-card v-if="isList" flat>
+      <!-- Header Actions -->
+      <v-card-text class="pa-2 pa-sm-3">
+        <v-row class="ma-0">
+          <v-spacer class="hidden-xs-only"></v-spacer>
+          <v-col cols="12" sm="6" md="4" lg="3" class="pa-1">
+            <v-btn class="btn-submit" @click="createCatalog" block depressed>
+              <v-icon left small>mdi-plus</v-icon>
+              Create Catalog
+            </v-btn>
           </v-col>
         </v-row>
-      </v-card-title>
-      <!-- <v-row>
-        <v-col
-          @click="openForm(null)"
-          class="text-center"
-          cols="12"
-          sm="6"
-          md="4"
-          lg="3"
-          v-for="(item, id) in dataCatalog"
-          :key="id"
-        >
-          <img :src="item.img" />
-          <v-card-text class="text-center">
-            <div>{{ item.title }}</div>
-          </v-card-text></v-col
-        >
-      </v-row> -->
-      <v-card-text>
-        <v-row>
-          <!--<v-col cols="12" sm="6" md="4" lg="8">
-            <v-select
-              dense
-              clearable
-              v-model="officeData"
-              outlined
-              label="Office Location"
-              :items="locationOptions"
-            ></v-select>
-          </v-col>-->
-          <v-col cols="12" sm="6" md="4" lg="4">
+      </v-card-text>
+
+      <!-- Filters -->
+      <v-card-text class="pa-2 pa-sm-3">
+        <v-row class="ma-0">
+          <v-col cols="12" sm="6" md="4" class="pa-1">
             <v-text-field
               dense
               clearable
               v-model="keyword"
               outlined
               :append-icon="icons.mdiMagnify"
-              label="Catalog"
+              label="Search catalog"
+              hide-details
             ></v-text-field>
           </v-col>
         </v-row>
       </v-card-text>
-      <v-card-text>
-        <v-data-table
-          hide-default-footer
-          style="width: 100%"
-          :loading="myloadingvariable"
-          :headers="headers"
-          :items="items"
-          @click:row="handleClick"
-          :footer-props="{
-            'items-per-page-options': [5, 10, 25],
-            'items-per-page-text': 'Items per page:',
-            'show-current-page': true,
-            'show-first-last-page': true,
-          }"
-        >
-          <template #[`item.logo`]="{ item, index }">
-            <img
-              style="width: 40px"
-              v-if="item.imageUrl !== null"
-              :src="baseUrl + item.imageUrl"
-            />
-          </template>
-          <template #[`item.slaDays`]="{ item, index }">
-            <span>{{ item.slaDays }} Days</span>
-          </template>
-          <template #[`item.slaHours`]="{ item, index }">
-            <span>{{ item.slaHours }} Hours</span>
-          </template>
-          <template #[`item.aksi`]="{ item, index }">
-            <v-tooltip bottom>
-              <template v-slot:activator="{ on, attrs }">
-                <v-icon
-                  v-bind="attrs"
-                  v-on="on"
-                  size="20"
-                  style="color: blue"
-                  v-on:click.stop="deleteConfirm(item.id)"
-                >
-                  {{ icons.mdiTrashCanOutline }}
-                </v-icon></template
-              ><span>Delete</span></v-tooltip
-            >
-          </template>
-        </v-data-table>
-        <div class="ml-4" style="display: flex; justify-content: space-between">
-          <span style="font-weight: 700; align-self: center"
-            >Total Data : {{ totalItems }}</span
+
+      <!-- Data Table -->
+      <v-card-text class="pa-0 pa-sm-2">
+        <div class="table-wrapper">
+          <v-data-table
+            hide-default-footer
+            :loading="myloadingvariable"
+            :headers="tableHeaders"
+            :items="items"
+            @click:row="handleClick"
+            :mobile-breakpoint="0"
+            class="elevation-0 catalog-table"
+            :footer-props="{
+              'items-per-page-options': [5, 10, 25],
+            }"
           >
+            <template #[`item.logo`]="{ item }">
+              <div class="logo-cell">
+                <img
+                  v-if="item.imageUrl !== null"
+                  :src="baseUrl + item.imageUrl"
+                  class="catalog-logo"
+                  alt="Logo"
+                />
+                <span v-else class="text-caption grey--text">No logo</span>
+              </div>
+            </template>
+            <template #[`item.slaDays`]="{ item }">
+              <v-chip small outlined color="primary">
+                {{ item.slaDays }} Days
+              </v-chip>
+            </template>
+            <template #[`item.slaHours`]="{ item }">
+              <v-chip small outlined color="success">
+                {{ item.slaHours }} Hours
+              </v-chip>
+            </template>
+            <template #[`item.aksi`]="{ item }">
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-btn
+                    icon
+                    small
+                    v-bind="attrs"
+                    v-on="on"
+                    @click.stop="deleteConfirm(item.id)"
+                    color="error"
+                  >
+                    <v-icon small>{{ icons.mdiTrashCanOutline }}</v-icon>
+                  </v-btn>
+                </template>
+                <span>Delete</span>
+              </v-tooltip>
+            </template>
+          </v-data-table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-wrapper pa-2 pa-sm-3">
+          <span class="total-data-text">Total: {{ totalItems }}</span>
           <v-pagination
             v-model="pages"
             :length="totalPage"
             @input="onPageChangeDetil"
-            :total-visible="7"
+            :total-visible="paginationVisible"
+            class="pagination-component"
           ></v-pagination>
         </div>
       </v-card-text>
     </v-card>
-    <v-card style="padding: 3%" v-else>
-      <PageAddCatalog :isEdit="isEdit" :datas="datas" @clicked="onClickChild" />
+
+    <!-- Add/Edit Form -->
+    <v-card v-else flat class="pa-2 pa-sm-4">
+      <PageAddCatalog 
+        :isEdit="isEdit" 
+        :datas="datas" 
+        @clicked="onClickChild" 
+      />
     </v-card>
+
+    <!-- Modals -->
     <HelpdeskFormModal
       :open="openModal"
       @close="openModal = false"
     ></HelpdeskFormModal>
-    <CreateCatalog :open="openModalCatalog" @close="closeModal"></CreateCatalog>
+    
+    <CreateCatalog 
+      :open="openModalCatalog" 
+      @close="closeModal"
+    ></CreateCatalog>
   </div>
 </template>
+
 <script>
 import Swal from "sweetalert2";
 import { mdiChevronRight, mdiTrashCanOutline, mdiMagnify } from "@mdi/js";
@@ -128,6 +132,7 @@ import HelpdeskFormModal from "./HelpdeskFormModal.vue";
 import PageAddCatalog from "./PageAddCatalog.vue";
 
 const getHelpDesk = ItHelpDeskService.build();
+
 export default {
   components: {
     HelpdeskFormModal,
@@ -150,42 +155,55 @@ export default {
       },
       headers: [
         { text: "Catalog", value: "name" },
-        // { text: "Lokasi Kantor", value: "officeLocationName" },
         { text: "Logo", value: "logo" },
         { text: "SLA Days", value: "slaDays" },
         { text: "SLA Hours", value: "slaHours" },
-        { text: "Action", value: "aksi" },
+        { text: "Action", value: "aksi", sortable: false },
       ],
       items: [],
       isEdit: false,
       datas: {},
-      totalPages: 0,
-      totalElements: 0,
-      last: true,
-      search: "",
-      first: true,
-      numberOfElements: 0,
-      size: 20,
-      number: 0,
       keyword: null,
       officeData: "",
       locationOptions: [],
       openModalCatalog: false,
       openModal: false,
-      dataCatalog: [],
     };
+  },
+  computed: {
+    tableHeaders() {
+      if (this.$vuetify.breakpoint.xs) {
+        return [
+          { text: "Catalog", value: "name" },
+          { text: "SLA", value: "slaDays" },
+          { text: "Action", value: "aksi", sortable: false },
+        ];
+      }
+      if (this.$vuetify.breakpoint.sm) {
+        return [
+          { text: "Catalog", value: "name" },
+          { text: "Logo", value: "logo" },
+          { text: "SLA Days", value: "slaDays" },
+          { text: "Action", value: "aksi", sortable: false },
+        ];
+      }
+      return this.headers;
+    },
+    paginationVisible() {
+      if (this.$vuetify.breakpoint.xs) return 3;
+      if (this.$vuetify.breakpoint.sm) return 5;
+      return 7;
+    }
   },
   created() {
     this.getHelpDesk(1);
     this.getLocations();
   },
-
   watch: {
     keyword() {
       this.getHelpDesk(1);
     },
   },
-
   methods: {
     async deleteConfirm(id) {
       Swal.fire({
@@ -199,8 +217,6 @@ export default {
       }).then((result) => {
         if (result.isConfirmed) {
           this.delete(id);
-        } else {
-          return false;
         }
       });
     },
@@ -217,7 +233,6 @@ export default {
           allowOutsideClick: false,
         }).then((result) => {
           if (result) {
-            this.loading = false;
             this.getHelpDesk(1);
           }
         });
@@ -230,10 +245,6 @@ export default {
           showConfirmButton: true,
           allowEscapeKey: false,
           allowOutsideClick: false,
-        }).then((result) => {
-          if (result) {
-            this.loading = false;
-          }
         });
       }
     },
@@ -276,13 +287,6 @@ export default {
     },
     createCatalog() {
       this.openModalCatalog = true;
-      // this.isList = false;
-    },
-    openForm(id) {
-      if (id) {
-      }
-
-      this.openModal = true;
     },
     closeModal() {
       this.items = [];
@@ -292,10 +296,117 @@ export default {
   },
 };
 </script>
+
 <style scoped>
+.catalog-container {
+  width: 100%;
+}
+
 .btn-submit {
   color: white !important;
   background-color: #0172b9 !important;
+  text-transform: none;
+}
+
+.table-wrapper {
+  overflow-x: auto;
   width: 100%;
+}
+
+.catalog-table >>> tbody tr {
+  cursor: pointer;
+}
+
+.catalog-table >>> tbody tr:hover {
+  background-color: #f5f5f5 !important;
+}
+
+.logo-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+}
+
+.catalog-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.total-data-text {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* Tablet */
+@media (max-width: 960px) {
+  .catalog-logo {
+    width: 32px;
+    height: 32px;
+  }
+
+  ::v-deep .v-data-table th,
+  ::v-deep .v-data-table td {
+    font-size: 13px;
+    padding: 0 8px !important;
+  }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .logo-cell {
+    min-height: 40px;
+  }
+
+  .catalog-logo {
+    width: 28px;
+    height: 28px;
+  }
+
+  .pagination-wrapper {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .total-data-text {
+    font-size: 12px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .pagination-component {
+    width: 100%;
+  }
+
+  ::v-deep .v-pagination__navigation,
+  ::v-deep .v-pagination__item {
+    min-width: 28px !important;
+    height: 28px !important;
+    margin: 1px !important;
+    font-size: 12px;
+  }
+
+  ::v-deep .v-data-table th,
+  ::v-deep .v-data-table td {
+    font-size: 11px !important;
+    padding: 0 4px !important;
+  }
+
+  ::v-deep .v-chip {
+    font-size: 10px !important;
+    height: 20px !important;
+  }
 }
 </style>
