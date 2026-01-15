@@ -1,13 +1,219 @@
 <template>
   <div style="margin-top: -5rem">
-    <v-row>
-      <v-col v-for="(item, index) in businessApps" :key="index" cols="12" sm="6" md="4" lg="3">
+    <!-- Toggle View & Filter Section -->
+    <v-row class="mb-4">
+      <v-col cols="12" md="8">
+        <v-card flat outlined>
+          <v-card-text>
+            <v-row align="center">
+              <v-col cols="12" sm="6" md="4">
+                <v-text-field
+                  v-model="searchQuery"
+                  :append-icon="icons.mdiMagnify"
+                  label="Search applications"
+                  outlined
+                  dense
+                  hide-details
+                  clearable
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" sm="6" md="4">
+                <v-select
+                  v-model="selectedCategory"
+                  :items="categoryOptions"
+                  label="Filter by Category"
+                  outlined
+                  dense
+                  hide-details
+                  clearable
+                ></v-select>
+              </v-col>
+              <v-col cols="12" sm="6" md="4">
+                <v-select
+                  v-model="sortBy"
+                  :items="sortOptions"
+                  label="Sort by"
+                  outlined
+                  dense
+                  hide-details
+                ></v-select>
+              </v-col>
+            </v-row>
+          </v-card-text>
+        </v-card>
+      </v-col>
+      <v-col cols="12" md="4">
+        <v-card flat outlined>
+          <v-card-text>
+            <v-row align="center">
+              <v-col cols="6">
+                <v-btn
+                  block
+                  :color="viewMode === 'grid' ? 'primary' : 'default'"
+                  @click="viewMode = 'grid'"
+                >
+                  <v-icon left>{{ icons.mdiViewGrid }}</v-icon>
+                  Grid
+                </v-btn>
+              </v-col>
+              <v-col cols="6">
+                <v-btn
+                  block
+                  :color="viewMode === 'analytics' ? 'primary' : 'default'"
+                  @click="viewMode = 'analytics'"
+                >
+                  <v-icon left>{{ icons.mdiChartBar }}</v-icon>
+                  Analytics
+                </v-btn>
+              </v-col>
+            </v-row>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <!-- Analytics View -->
+    <div v-if="viewMode === 'analytics'">
+      <!-- Stats Cards -->
+      <v-row class="mb-4">
+        <v-col
+          v-for="(stat, index) in appStats"
+          :key="index"
+          cols="12"
+          sm="6"
+          md="3"
+        >
+          <v-card
+            :class="stat.class"
+            class="stat-card"
+            hover
+            @click="filterByCategory(stat.category)"
+            style="cursor: pointer"
+          >
+            <v-card-text>
+              <v-icon large style="color: white">{{ stat.icon }}</v-icon>
+              <div class="white--text mt-2 text-subtitle-2">{{ stat.title }}</div>
+              <div class="text-h4 font-weight-bold white--text mt-2">
+                {{ stat.value }}
+              </div>
+              <div class="caption white--text mt-1">
+                {{ calculatePercentage(stat.value) }}% of total
+              </div>
+              <v-progress-linear
+                :value="calculatePercentage(stat.value)"
+                color="white"
+                height="4"
+                class="mt-2"
+              ></v-progress-linear>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <!-- Charts Section -->
+      <v-row>
+        <v-col cols="12" md="6">
+          <v-card>
+            <v-card-title>
+              <v-icon left color="primary">{{ icons.mdiChartPie }}</v-icon>
+              Apps Distribution by Category
+            </v-card-title>
+            <v-card-text>
+              <apexchart
+                type="pie"
+                height="350"
+                :options="pieChartOptions"
+                :series="pieChartSeries"
+              ></apexchart>
+            </v-card-text>
+          </v-card>
+        </v-col>
+        <v-col cols="12" md="6">
+          <v-card>
+            <v-card-title>
+              <v-icon left color="primary">{{ icons.mdiChartBar }}</v-icon>
+              Apps per Category
+            </v-card-title>
+            <v-card-text>
+              <apexchart
+                type="bar"
+                height="350"
+                :options="barChartOptions"
+                :series="barChartSeries"
+              ></apexchart>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <!-- Detailed Table -->
+      <v-row class="mt-4">
+        <v-col cols="12">
+          <v-card>
+            <v-card-title>
+              <v-icon left>{{ icons.mdiTable }}</v-icon>
+              Application List
+              <v-spacer></v-spacer>
+              <v-btn color="success" @click="exportData">
+                <v-icon left>{{ icons.mdiDownload }}</v-icon>
+                Export
+              </v-btn>
+            </v-card-title>
+            <v-data-table
+              :headers="tableHeaders"
+              :items="flattenedApps"
+              :search="searchQuery"
+              class="elevation-1"
+              :footer-props="{
+                'items-per-page-options': [10, 25, 50],
+              }"
+            >
+              <template #[`item.imageUrl`]="{ item }">
+                <v-avatar size="40">
+                  <v-img :src="baseUrl + item.imageUrl"></v-img>
+                </v-avatar>
+              </template>
+              <template #[`item.link`]="{ item }">
+                <v-btn
+                  icon
+                  small
+                  color="primary"
+                  @click="openLink(item.link)"
+                >
+                  <v-icon small>{{ icons.mdiOpenInNew }}</v-icon>
+                </v-btn>
+              </template>
+              <template #[`item.category`]="{ item }">
+                <v-chip small :color="getCategoryColor(item.category)" dark>
+                  {{ item.category }}
+                </v-chip>
+              </template>
+            </v-data-table>
+          </v-card>
+        </v-col>
+      </v-row>
+    </div>
+
+    <!-- Grid View (Original) -->
+    <v-row v-else>
+      <v-col
+        v-for="(item, index) in filteredBusinessApps"
+        :key="index"
+        cols="12"
+        sm="6"
+        md="4"
+        lg="3"
+      >
         <v-card>
           <v-card-title class="title-apps">
             <v-icon class="icon-apps mr-2">{{ icons.mdiDotsGrid }}</v-icon>
             {{ item.name }}
             <v-spacer></v-spacer>
-            <v-icon v-if="isIT" @click="detailApps(1, item)" class="icon-apps add-apps mr-2">
+            <v-icon
+              v-if="isIT"
+              @click="detailApps(1, item)"
+              class="icon-apps add-apps mr-2"
+            >
               {{ icons.mdiPlus }}
             </v-icon>
           </v-card-title>
@@ -18,9 +224,14 @@
               <div class="text-center">
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on, attrs }">
-                    <v-img v-bind="attrs" v-on="on" style="height: 60px; width: 60px; margin: 0 auto"
-                      :src="item.link === 0 ? item.imageUrl : baseUrl + item.imageUrl" alt="Application Image"
-                      @click="detailApps(item.link)"></v-img>
+                    <v-img
+                      v-bind="attrs"
+                      v-on="on"
+                      style="height: 60px; width: 60px; margin: 0 auto"
+                      :src="item.link === 0 ? item.imageUrl : baseUrl + item.imageUrl"
+                      alt="Application Image"
+                      @click="detailApps(item.link)"
+                    ></v-img>
                   </template>
                   <span>{{ item.description }}</span>
                 </v-tooltip>
@@ -28,8 +239,13 @@
               <v-spacer />
             </v-container>
             <v-row v-if="item.apps != null">
-              <v-col class="center-hr" v-for="(data, id) in item.apps" :key="id" cols="4"
-                @click="detailApps(data.link)">
+              <v-col
+                class="center-hr"
+                v-for="(data, id) in item.apps"
+                :key="id"
+                cols="4"
+                @click="detailApps(data.link)"
+              >
                 <v-menu v-if="isIT" offset-y>
                   <template v-slot:activator="{ on }">
                     <v-btn style="right: -25px; top: 10px" icon v-on="on">
@@ -48,8 +264,14 @@
                 <br />
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on, attrs }">
-                    <img v-bind="attrs" v-on="on" :src="baseUrl + data.imageUrl" alt="Application Image" width="48"
-                      height="48" />
+                    <img
+                      v-bind="attrs"
+                      v-on="on"
+                      :src="baseUrl + data.imageUrl"
+                      alt="Application Image"
+                      width="48"
+                      height="48"
+                    />
                   </template>
                   <span>{{ data.description }}</span>
                 </v-tooltip>
@@ -62,18 +284,36 @@
       </v-col>
     </v-row>
 
-    <AddApps :addBisnis="addBisnis" :isBsns="true" :open="openModalCatalog" :datas="datas" @clicked="closeModal"
-      :isEdit="isEdit"></AddApps>
+    <AddApps
+      :addBisnis="addBisnis"
+      :isBsns="true"
+      :open="openModalCatalog"
+      :datas="datas"
+      @clicked="closeModal"
+      :isEdit="isEdit"
+    ></AddApps>
   </div>
 </template>
 
 <script>
 import Swal from "sweetalert2";
-import { mdiDotsGrid, mdiPlus, mdiDotsVertical } from "@mdi/js";
+import {
+  mdiDotsGrid,
+  mdiPlus,
+  mdiDotsVertical,
+  mdiMagnify,
+  mdiChartBar,
+  mdiChartPie,
+  mdiViewGrid,
+  mdiTable,
+  mdiDownload,
+  mdiOpenInNew,
+} from "@mdi/js";
 import AddApps from "./component/CreateAppsFormModal.vue";
 import ApplicationService from "../../services/application/applicationServices";
 
 const getApps = ApplicationService.build();
+
 export default {
   components: {
     AddApps,
@@ -87,23 +327,267 @@ export default {
       datas: {},
       openModalCatalog: false,
       currentIndex: 0,
+      
+      // New features
+      viewMode: "grid", // 'grid' or 'analytics'
+      searchQuery: "",
+      selectedCategory: null,
+      sortBy: "name",
+      
       icons: {
         mdiDotsVertical,
         mdiPlus,
         mdiDotsGrid,
+        mdiMagnify,
+        mdiChartBar,
+        mdiChartPie,
+        mdiViewGrid,
+        mdiTable,
+        mdiDownload,
+        mdiOpenInNew,
       },
       businessApps: [],
+      
+      sortOptions: [
+        { text: "Name (A-Z)", value: "name" },
+        { text: "Name (Z-A)", value: "name_desc" },
+        { text: "Category", value: "category" },
+      ],
+      
+      tableHeaders: [
+        { text: "Image", value: "imageUrl", sortable: false },
+        { text: "Name", value: "name" },
+        { text: "Category", value: "category" },
+        { text: "Description", value: "description" },
+        { text: "Link", value: "link", sortable: false },
+      ],
+      
+      // Chart options
+      pieChartOptions: {
+        chart: {
+          type: "pie",
+        },
+        labels: [],
+        colors: ["#0172b9", "#a11497", "#adc43b", "#ffd401", "#ec323f"],
+        legend: {
+          position: "bottom",
+        },
+      },
+      pieChartSeries: [],
+      
+      barChartOptions: {
+        chart: {
+          type: "bar",
+          toolbar: { show: false },
+        },
+        plotOptions: {
+          bar: {
+            distributed: true,
+            borderRadius: 8,
+            horizontal: false,
+          },
+        },
+        colors: ["#0172b9", "#a11497", "#adc43b", "#ffd401", "#ec323f"],
+        xaxis: {
+          categories: [],
+        },
+        yaxis: {
+          labels: {
+            formatter: (val) => (Number.isInteger(val) ? val.toFixed(0) : ""),
+          },
+        },
+        legend: { show: false },
+      },
+      barChartSeries: [{ name: "Apps", data: [] }],
     };
   },
+  
+  computed: {
+    // Flatten all apps for table view
+    flattenedApps() {
+      const apps = [];
+      this.businessApps.forEach(category => {
+        if (category.apps && category.apps.length > 0) {
+          category.apps.forEach(app => {
+            apps.push({
+              ...app,
+              category: category.name,
+            });
+          });
+        }
+      });
+      return apps;
+    },
+    
+    // Filter apps based on search and category
+    filteredBusinessApps() {
+      let filtered = [...this.businessApps];
+      
+      // Filter by category
+      if (this.selectedCategory) {
+        filtered = filtered.filter(item => item.name === this.selectedCategory);
+      }
+      
+      // Filter by search
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase();
+        filtered = filtered.filter(item => {
+          const nameMatch = item.name.toLowerCase().includes(query);
+          const appsMatch = item.apps && item.apps.some(app => 
+            app.name.toLowerCase().includes(query)
+          );
+          return nameMatch || appsMatch;
+        });
+      }
+      
+      // Sort
+      if (this.sortBy === "name") {
+        filtered.sort((a, b) => a.name.localeCompare(b.name));
+      } else if (this.sortBy === "name_desc") {
+        filtered.sort((a, b) => b.name.localeCompare(a.name));
+      }
+      
+      return filtered;
+    },
+    
+    // Category options for filter
+    categoryOptions() {
+      return this.businessApps.map(item => ({
+        text: item.name,
+        value: item.name,
+      }));
+    },
+    
+    // Stats for analytics cards
+    appStats() {
+      const stats = [];
+      
+      // Total apps
+      const totalApps = this.flattenedApps.length;
+      stats.push({
+        title: "Total Applications",
+        value: totalApps,
+        icon: this.icons.mdiDotsGrid,
+        class: "stat-total",
+        category: null,
+      });
+      
+      // Apps per category (top 3)
+      const categoryCounts = {};
+      this.businessApps.forEach(category => {
+        if (category.apps) {
+          categoryCounts[category.name] = category.apps.length;
+        }
+      });
+      
+      const sortedCategories = Object.entries(categoryCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3);
+      
+      const colors = ["stat-primary", "stat-secondary", "stat-success"];
+      sortedCategories.forEach(([name, count], index) => {
+        stats.push({
+          title: name,
+          value: count,
+          icon: this.icons.mdiDotsGrid,
+          class: colors[index],
+          category: name,
+        });
+      });
+      
+      return stats;
+    },
+  },
+  
+  watch: {
+    businessApps: {
+      handler() {
+        this.updateCharts();
+      },
+      deep: true,
+    },
+  },
+  
   created() {
     this.getAppsBsns();
     this.getRole();
   },
+  
   methods: {
+    updateCharts() {
+      // Update pie chart
+      const categoryData = {};
+      this.businessApps.forEach(category => {
+        if (category.apps) {
+          categoryData[category.name] = category.apps.length;
+        }
+      });
+      
+      this.pieChartOptions.labels = Object.keys(categoryData);
+      this.pieChartSeries = Object.values(categoryData);
+      
+      // Update bar chart
+      this.barChartOptions.xaxis.categories = Object.keys(categoryData);
+      this.barChartSeries[0].data = Object.values(categoryData);
+    },
+    
+    calculatePercentage(value) {
+      const total = this.flattenedApps.length;
+      if (total === 0) return 0;
+      return ((value / total) * 100).toFixed(1);
+    },
+    
+    filterByCategory(category) {
+      if (category) {
+        this.selectedCategory = category;
+        this.viewMode = "grid";
+      }
+    },
+    
+    getCategoryColor(category) {
+      const colors = {
+        default: "#0172b9",
+      };
+      return colors[category] || colors.default;
+    },
+    
+    openLink(link) {
+      if (typeof link === "string") {
+        window.open(link, "_blank");
+      }
+    },
+    
+    exportData() {
+      const headers = ["Name", "Category", "Description", "Link"];
+      const csvData = this.flattenedApps.map(app => [
+        app.name,
+        app.category,
+        app.description || "",
+        app.link || "",
+      ]);
+      
+      const csvContent = [
+        headers.join(","),
+        ...csvData.map(row => row.map(cell => `"${cell}"`).join(","))
+      ].join("\n");
+      
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", "business_applications.csv");
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    },
+    
+    // Original methods
     updateDialogVisible(value) {
       this.openModalCatalog = false;
       this.dialogVisible = value;
     },
+    
     getRole() {
       const role = JSON.parse(localStorage.getItem("dataUser"));
       if (
@@ -116,6 +600,7 @@ export default {
         this.isIT = false;
       }
     },
+    
     async menuItemClicked(x, y) {
       if (y === 0) {
         this.datas = x;
@@ -126,6 +611,7 @@ export default {
         this.deleted(x);
       }
     },
+    
     async deleteData(x) {
       const res = await getApps.deleteAppsBsns(x.id);
       if (res.data.status === 200) {
@@ -168,6 +654,7 @@ export default {
         });
       }
     },
+    
     async deleted(x) {
       Swal.fire({
         icon: "warning",
@@ -190,46 +677,13 @@ export default {
         }
       });
     },
-    successPopup(val) {
-      Swal.fire({
-        title: "Success",
-        text: val,
-        icon: "success",
-        button: false,
-        timer: 2000,
-      });
-    },
-    errorPopup(val) {
-      Swal.fire({
-        title: "Failed",
-        text: val,
-        icon: "error",
-        button: false,
-        timer: 2000,
-      });
-    },
-    async getImg(x) {
-      if (x !== null || x !== undefined) {
-        const res = await getApps.getFile(x.id);
-        const base = this.arrayBufferToBase64(res.data);
-        return `data:image/png;base64,${base}`;
-      }
-    },
-    arrayBufferToBase64(buffer) {
-      let binary = "";
-      const bytes = new Uint8Array(buffer);
-      const len = bytes.byteLength;
-      for (let i = 0; i < len; i++) {
-        binary += String.fromCharCode(bytes[i]);
-      }
-
-      return window.btoa(binary);
-    },
+    
     closeModal() {
       this.openModalCatalog = false;
       this.datas = {};
       this.getAppsBsns();
     },
+    
     detailApps(x, y) {
       if (x === 0) {
         this.addBisnis = false;
@@ -242,56 +696,49 @@ export default {
         window.open(x, "_blank");
       }
     },
+    
     async getAppsBsns() {
       const res = await getApps.getAppsBsns();
       const data = res.data.data;
       this.businessApps = data;
-    },
-    limitText(text, limit) {
-      if (text.length > limit) {
-        return text.substring(0, limit) + "\n" + text.substring(limit);
-      }
-      return text;
     },
   },
 };
 </script>
 
 <style scoped>
-.container-img {
-  position: relative;
-  display: inline-block;
+.stat-card {
+  text-align: center;
+  transition: all 0.3s ease;
 }
 
-.overlay-image {
-  position: absolute;
-  top: -45px;
-  right: 0;
+.stat-card:hover {
+  transform: translateY(-5px);
+}
+
+.stat-total {
+  background: linear-gradient(135deg, #0172b9 0%, #015a93 100%);
+  color: white;
+}
+
+.stat-primary {
+  background: linear-gradient(135deg, #a11497 0%, #810d77 100%);
+  color: white;
+}
+
+.stat-secondary {
+  background: linear-gradient(135deg, #adc43b 0%, #8fa62e 100%);
+  color: white;
+}
+
+.stat-success {
+  background: linear-gradient(135deg, #ffd401 0%, #e6be00 100%);
+  color: white;
 }
 
 .card-text-apps {
   height: 21rem;
   overflow-y: auto;
-}
-
-.card-title {
-  font-size: 16px;
-  color: #0172b9;
-  font-weight: bold;
-}
-
-.card-content {
-  white-space: pre-line;
-  overflow: hidden;
-  font-size: 14px;
-}
-
-.icon-header {
-  color: #101010 !important;
-}
-
-.add-apps {
-  cursor: pointer;
 }
 
 .icon-apps {
@@ -302,18 +749,11 @@ export default {
   color: #0172b9 !important;
 }
 
-.title-header {
-  color: #101010 !important;
-  justify-content: center;
+.add-apps {
+  cursor: pointer;
 }
 
 .center-hr {
   text-align: center;
-}
-
-.horizontal-rule {
-  width: 5%;
-  border-top: 5px solid black;
-  margin: 20px auto;
 }
 </style>
