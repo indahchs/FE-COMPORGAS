@@ -142,6 +142,14 @@ const routes = [
         },
       },
       {
+        path: "request",
+        name: "ithelpdesksupport-request",
+        component: () => import("@/views/ithelpdesksupport/components/Resume.vue"),
+        meta: {
+          reqAuth: true,
+        },
+      },
+      {
         path: "catalog",
         name: "ithelpdesksupport-catalog",
         component: () => import("@/views/ithelpdesksupport/components/Catalog.vue"),

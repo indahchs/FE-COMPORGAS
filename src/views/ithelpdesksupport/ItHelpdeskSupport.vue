@@ -42,6 +42,15 @@ export default {
           imageBlue: require("../../assets/images/icons/request_blue.png"),
         },
         {
+          id: 1,
+          query: "request",
+          text: "Resume Ticket",
+          subtitle:
+            "A summary of requests for help or problem reports sent to the helpdesk team to monitor and evaluate the performance of the helpdesk team",
+          image: require("../../assets/images/icons/resume.svg"),
+          imageBlue: require("../../assets/images/icons/resume_blue.png"),
+        },
+        {
           id: 2,
           query: "catalog",
           text: "Master Catalog",
