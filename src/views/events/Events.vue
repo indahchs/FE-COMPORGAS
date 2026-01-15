@@ -339,6 +339,7 @@ export default {
 }
 
 .date-container {
+  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
   padding: 12px;
   text-align: center;
   width: 100%;
@@ -381,7 +382,7 @@ export default {
   font-size: 14px;
   line-height: 18px;
   font-weight: 600;
-  color: #fff;
+  color: #000000ff;
   margin-bottom: 6px;
   overflow: hidden;
   white-space: nowrap;
@@ -411,7 +412,7 @@ export default {
   font-size: 12px;
   line-height: 16px;
   font-weight: 400;
-  color: #fff;
+  color: #030303ff;
 }
 
 .location-text {
