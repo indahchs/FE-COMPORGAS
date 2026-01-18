@@ -863,31 +863,4 @@ export default {
 .row-pointer >>> tbody tr:hover {
   background-color: #f5f5f5;
 }
-
-/* Mobile Styles */
-@media (max-width: 600px) {
-  .stat-title {
-    font-size: 10px;
-  }
-
-  .stat-value {
-    font-size: 20px;
-  }
-
-  ::v-deep .v-card__title {
-    font-size: 14px !important;
-    padding: 8px !important;
-  }
-
-  ::v-deep .v-data-table th,
-  ::v-deep .v-data-table td {
-    font-size: 11px !important;
-    padding: 0 4px !important;
-  }
-
-  ::v-deep .v-chip {
-    font-size: 10px !important;
-    height: 20px !important;
-  }
-}
 </style>
