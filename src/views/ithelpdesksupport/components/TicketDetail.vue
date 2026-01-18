@@ -197,17 +197,38 @@
         <v-card-text>
           <form @submit.prevent="submit">
             <label class="required">Choose Location</label>
-            <v-select dense v-model.trim="$v.dispatchLocation.$model"
-              :error-messages="getErrors('dispatchLocation', $v.dispatchLocation)" @blur="$v.dispatchLocation.$touch()"
-              outlined :items="dataLoc" placeholder="Location"></v-select>
+            <v-select 
+              dense 
+              v-model.trim="$v.dispatchLocation.$model"
+              :error-messages="getErrors('dispatchLocation', $v.dispatchLocation)" 
+              @blur="$v.dispatchLocation.$touch()"
+              @change="onLocationChange"
+              outlined 
+              :items="filteredLocationList" 
+              placeholder="Location"
+              :no-data-text="'No location available for this catalog'"
+            ></v-select>
             <label class="required">Choose PIC</label>
-            <v-select dense v-model.trim="$v.dispatchPic.$model"
-              :error-messages="getErrors('dispatchPic', $v.dispatchPic)" @blur="$v.dispatchPic.$touch()" outlined
-              :items="dataPic" placeholder="PIC"></v-select>
+            <v-select 
+              dense 
+              v-model.trim="$v.dispatchPic.$model"
+              :error-messages="getErrors('dispatchPic', $v.dispatchPic)" 
+              @blur="$v.dispatchPic.$touch()" 
+              outlined
+              :items="filteredPicList" 
+              :disabled="!dispatchLocation"
+              placeholder="PIC"
+              :no-data-text="!dispatchLocation ? 'Please select location first' : 'No PIC available for this location'"
+            ></v-select>
             <label class="required">Note</label>
-            <v-textarea v-model.trim="$v.dispatchNote.$model"
-              :error-messages="getErrors('dispatchNote', $v.dispatchNote)" @blur="$v.dispatchNote.$touch()" outlined
-              dense placeholder="input note"></v-textarea>
+            <v-textarea 
+              v-model.trim="$v.dispatchNote.$model"
+              :error-messages="getErrors('dispatchNote', $v.dispatchNote)" 
+              @blur="$v.dispatchNote.$touch()" 
+              outlined
+              dense 
+              placeholder="input note"
+            ></v-textarea>
             <v-btn :loading="dispatchLoading" style="width: 100%" @click="saveDispatch" class="btn-action mr-4 mb-6">
               Dispatch Ticket
             </v-btn>
@@ -301,19 +322,59 @@ export default {
       dataClick: {},
       dataPic: [],
       dataLoc: [],
+      catalogPicList: [], // Menyimpan list PIC dari catalog
       imageSrc: "",
       imagePreviewDialog: false,
       isITLead: false,
       timer: null,
     };
   },
+  computed: {
+    // Filter location berdasarkan PIC yang ada di catalog dan aktif
+    filteredLocationList() {
+      if (!this.catalogPicList.length) {
+        return [];
+      }
+      
+      // Ambil semua location yang punya PIC aktif di catalog ini
+      const availableLocations = this.catalogPicList
+        .filter(pic => pic.active === true)
+        .map(pic => pic.officeLocationId);
+      
+      // Hilangkan duplikat
+      const uniqueLocations = [...new Set(availableLocations)];
+      
+      // Filter dataLoc berdasarkan location yang tersedia
+      return this.dataLoc.filter(loc => uniqueLocations.includes(loc.value));
+    },
+    
+    // Filter PIC berdasarkan location yang dipilih dan yang aktif
+    filteredPicList() {
+      if (!this.dispatchLocation || !this.catalogPicList.length) {
+        return [];
+      }
+      
+      // Filter PIC yang sesuai dengan location dan status active
+      const filtered = this.catalogPicList
+        .filter(pic => 
+          pic.officeLocationId === this.dispatchLocation && 
+          pic.active === true
+        )
+        .map(pic => ({
+          value: pic.userId,
+          text: pic.userName
+        }));
+      
+      return filtered;
+    }
+  },
   created() {
     this.getUserData();
-    this.getPic();
     this.getLoc();
 
     if (this.$route.params.ticket) {
       this.dataClick = this.$route.params.ticket;
+      this.getCatalogDetail(this.dataClick.catalogId);
       this.getChat(this.dataClick.id);
       this.getTimeline(this.dataClick.id);
       this.getTicketLatestDispatch(this.dataClick.id);
@@ -338,6 +399,25 @@ export default {
     dispatchNote: { required },
   },
   methods: {
+    // Method baru untuk get detail catalog beserta list PIC nya
+    async getCatalogDetail(catalogId) {
+      try {
+        const res = await ticketService.getHelpDeskById(catalogId);
+        if (res.data.status === 200) {
+          this.catalogPicList = res.data.data.listPic || [];
+        }
+      } catch (error) {
+        console.error("Failed to get catalog detail:", error);
+      }
+    },
+    
+    // Method untuk handle perubahan location
+    onLocationChange() {
+      // Reset PIC selection ketika location berubah
+      this.dispatchPic = "";
+      this.$v.dispatchPic.$reset();
+    },
+    
     async fetchTicketData(ticketId) {
       this.loading = true;
       try {
@@ -356,6 +436,7 @@ export default {
 
         if (ticket) {
           this.dataClick = ticket;
+          this.getCatalogDetail(ticket.catalogId);
           this.getChat(ticket.id);
           this.getTimeline(ticket.id);
           this.getTicketLatestDispatch(ticket.id);
@@ -518,14 +599,6 @@ export default {
     formatDateTime(x) {
       return moment(x).format("HH:mm DD-MM-YYYY");
     },
-    async getPic() {
-      const res = await ticketService.getPic();
-      const data = res.data.data;
-      this.dataPic = data.map((project) => ({
-        value: project.value,
-        text: project.label,
-      }));
-    },
     async getLoc() {
       const res = await ticketService.getLocation();
       const data = res.data.data;
@@ -584,6 +657,12 @@ export default {
         const res = await ticketService.postChat(param);
 
         if (res.data.status === 200) {
+          // Auto-update status ke INPROGRESS jika masih ASSIGNED atau SUBMITTED
+          if (this.dataClick.statusId === 'ASSIGNED' || this.dataClick.statusId === 'SUBMITTED') {
+            this.dataClick.statusId = 'INPROGRESS';
+            this.dataClick.statusName = 'In Progress';
+          }
+          
           if (this.selectedFile1 !== null) {
             await this.uploadFile(res.data.data);
           } else {
