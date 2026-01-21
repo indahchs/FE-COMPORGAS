@@ -2,11 +2,11 @@
   <div style="margin-top: -5rem">
     <!-- Toggle View & Filter Section -->
     <v-row class="mb-4">
-      <v-col cols="12" md="8">
+      <v-col cols="12" :md="canViewAnalytics ? 8 : 12">
         <v-card flat outlined>
           <v-card-text>
             <v-row align="center">
-              <v-col cols="12" sm="6" md="4">
+              <v-col cols="12" sm="6" :md="canViewAnalytics ? 4 : 6">
                 <v-text-field
                   v-model="searchQuery"
                   :append-icon="icons.mdiMagnify"
@@ -17,7 +17,7 @@
                   clearable
                 ></v-text-field>
               </v-col>
-              <v-col cols="12" sm="6" md="4">
+              <v-col cols="12" sm="6" md="3">
                 <v-select
                   v-model="selectedCategory"
                   :items="categoryOptions"
@@ -28,7 +28,7 @@
                   clearable
                 ></v-select>
               </v-col>
-              <v-col cols="12" sm="6" md="4">
+              <v-col cols="12" sm="6" md="3">
                 <v-select
                   v-model="sortBy"
                   :items="sortOptions"
@@ -42,7 +42,7 @@
           </v-card-text>
         </v-card>
       </v-col>
-      <v-col cols="12" md="4">
+      <v-col v-if="canViewAnalytics" cols="12" md="4">
         <v-card flat outlined>
           <v-card-text>
             <v-row align="center">
@@ -73,7 +73,7 @@
     </v-row>
 
     <!-- Analytics View -->
-    <div v-if="viewMode === 'analytics'">
+    <div v-if="viewMode === 'analytics' && canViewAnalytics">
       <!-- Stats Cards -->
       <v-row class="mb-4">
         <v-col
@@ -334,6 +334,9 @@ export default {
       selectedCategory: null,
       sortBy: "name",
       
+      // User role
+      userRole: null,
+      
       icons: {
         mdiDotsVertical,
         mdiPlus,
@@ -403,6 +406,11 @@ export default {
   },
   
   computed: {
+    // Check if user can view analytics
+    canViewAnalytics() {
+      return this.userRole === "SUPER" || this.userRole === "IT_LEAD";
+    },
+    
     // Flatten all apps for table view
     flattenedApps() {
       const apps = [];
@@ -590,6 +598,8 @@ export default {
     
     getRole() {
       const role = JSON.parse(localStorage.getItem("dataUser"));
+      this.userRole = role.roleId;
+      
       if (
         role.roleId === "IT" ||
         role.roleId === "IT_LEAD" ||
