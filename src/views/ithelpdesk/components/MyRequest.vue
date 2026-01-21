@@ -1,86 +1,116 @@
 <template>
-  <div>
-    <v-row class="mx-1">
-      <v-spacer />
-      <v-col cols="12" sm="6" md="4" lg="2">
-        <v-select dense v-model="catalogId" outlined :items="dataCatalog" label="Catalog" clearable></v-select>
-      </v-col>
-      <v-col cols="12" sm="6" md="4" lg="2">
-        <date-picker :format="dateFormat" v-model="startDate" format="DD-MM-YYYY" placeholder="Start Date"
-          class="datetime-picker"></date-picker>
-      </v-col>
-      <v-col cols="12" sm="6" md="4" lg="2">
-        <date-picker :format="dateFormat" v-model="endDate" :disabled-date="disabledFromStartDate" format="DD-MM-YYYY"
-          placeholder="End Date" class="datetime-picker"></date-picker>
-      </v-col>
-      <v-col cols="12" sm="6" md="4" lg="4">
-        <v-text-field dense :append-icon="icons.mdiMagnify" v-model="keyword" outlined
-          label="Search by ticket number or title" clearable></v-text-field>
-      </v-col>
-      <v-col cols="12" sm="6" md="2" lg="2">
-        <v-btn @click="addTicket" class="btn-search" depressed>New Request</v-btn>
-      </v-col>
-    </v-row>
-    <v-row style="padding: 1%">
-      <v-data-table hide-default-footer style="width: 100%" :headers="headers" :loading="loading" :items="items"
-        @click:row="handleClick" :footer-props="{
-          'items-per-page-options': [5, 10, 25],
-          'items-per-page-text': 'Items per page:',
-          'show-current-page': true,
-          'show-first-last-page': true,
-        }">
-        <template #[`item.createdAt`]="{ item, index }">
-          <span>{{ formatDate(item.createdAt) }}</span>
-        </template>
-        <template #[`item.rating`]="{ item, index }">
-          {{ item.rating !== "" && item.rating !== null ? "Yes" : "No" }}
-        </template>
-        <template #[`item.statusName`]="{ item, index }">
-          <span class="pa-2" style="
-              color: white;
-              background-color: #0172b9;
-              border-radius: 5px;
-            " v-if="item.statusId === 'SUBMITTED'">{{ item.statusName }}
-            <v-icon color="white">{{ icons.mdiCheck }}</v-icon></span>
-          <span class="pa-2" style="
-              color: white;
-              background-color: #ff7a00;
-              border-radius: 5px;
-            " v-if="item.statusId === 'PENDING'">{{ item.statusName }}
-            <v-icon color="white">{{ icons.mdiCheck }}</v-icon></span>
-          <span class="pa-2" style="
-              color: white;
-              background-color: #a11497;
-              border-radius: 5px;
-            " v-if="item.statusId === 'ASSIGNED'">{{ item.statusName }}
-            <v-icon color="white">{{ icons.mdiCheck }}</v-icon></span>
-          <span class="pa-2" style="
-              color: white;
-              background-color: #ec323f;
-              border-radius: 5px;
-            " v-if="item.statusId === 'LATE'">{{ item.statusName }}
-            <v-icon color="white">{{ icons.mdiCheck }}</v-icon></span>
-          <span class="pa-2" style="
-              color: white;
-              background-color: #adc43b;
-              border-radius: 5px;
-            " v-if="item.statusId === 'RESOLVED'">{{ item.statusName }}
-            <v-icon color="white">{{ icons.mdiCheckAll }}</v-icon></span>
-          <span class="pa-2" style="
-              color: white;
-              background-color: #0172b9;
-              border-radius: 5px;
-            " v-if="item.statusId === 'INPROGRESS'">{{ item.statusName }}
-            <v-icon color="white">{{ icons.mdiCheck }}</v-icon></span>
-        </template>
-      </v-data-table>
-    </v-row>
-    <div class="ml-4 mb-4" style="display: flex; justify-content: space-between">
-      <span style="font-weight: 700; align-self: center">Total Data : {{ totalItems }}</span>
-      <v-pagination v-model="pages" :length="totalPage" @input="onPageChangeDetil" :total-visible="7"></v-pagination>
-    </div>
+  <div class="helpdesk-container">
+    <!-- Main Content -->
+    <v-card class="main-card">
+      <!-- Filters -->
+      <v-card-text class="pa-3 pa-sm-4">
+        <v-col cols="12" md="12">
+          <v-text-field 
+            dense
+            :append-icon="icons.mdiMagnify"
+            v-model="keyword" 
+            outlined
+            label="Search by ticket number or title" 
+            clearable
+            hide-details
+          />
+        </v-col>
+        <v-row class="ma-0">
+          <v-col cols="6" sm="6" md="3">
+            <v-select 
+              dense
+              v-model="catalogId" 
+              outlined
+              :items="dataCatalog" 
+              label="Catalog" 
+              clearable
+              hide-details
+            />
+          </v-col>
+          <v-col cols="6" sm="6" md="3">
+            <date-picker 
+              :format="dateFormat"
+              v-model="startDate" 
+              format="DD-MM-YYYY" 
+              placeholder="Start Date"
+              class="datetime-picker"
+            />
+          </v-col>
+          <v-col cols="6" sm="6" md="3">
+            <date-picker 
+              :format="dateFormat"
+              v-model="endDate" 
+              :disabled-date="disabledFromStartDate"
+              format="DD-MM-YYYY" 
+              placeholder="End Date"
+              class="datetime-picker"
+            />
+          </v-col>
+          <v-col cols="6" sm="6" md="3">
+            <v-btn 
+              class="btn-blue"
+              @click="addTicket" 
+              depressed
+              block
+              big
+            >
+              <v-icon left small>{{ icons.mdiPlus }}</v-icon>
+              New Request
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-card-text>
 
-    <HelpdeskFormModal :open="helpdeskModal" :datas="datas" @close="closeHelpdeskModal"></HelpdeskFormModal>
+      <!-- Table -->
+      <v-card-text class="pa-0 pa-sm-2">
+        <div class="table-container">
+          <v-data-table 
+            hide-default-footer
+            :loading="loading"
+            :headers="headers" 
+            :items="items"
+            @click:row="handleClick"
+            :mobile-breakpoint="0"
+          >
+            <template #[`item.createdAt`]="{ item }">
+              <span class="text-no-wrap">{{ formatDate(item.createdAt) }}</span>
+            </template>
+            <template #[`item.statusName`]="{ item }">
+              <v-chip 
+                small 
+                :class="getStatusClass(item.statusId)"
+                class="status-chip"
+              >
+                <span class="status-text">{{ item.statusName }}</span>
+                <v-icon color="white" x-small class="ml-1">
+                  {{ getStatusIcon(item.statusId) }}
+                </v-icon>
+              </v-chip>
+            </template>
+          </v-data-table>
+        </div>
+      </v-card-text>
+
+      <!-- Pagination -->
+      <v-card-text class="pa-2 pa-sm-3">
+        <div class="pagination-wrapper">
+          <span class="total-data-text">Total: {{ totalItems }}</span>
+          <v-pagination 
+            v-model="pages" 
+            :length="totalPage" 
+            @input="onPageChangeDetil"
+            :total-visible="paginationVisible"
+          />
+        </div>
+      </v-card-text>
+    </v-card>
+
+    <!-- Modal -->
+    <HelpdeskFormModal 
+      :open="helpdeskModal" 
+      :datas="datas" 
+      @close="closeHelpdeskModal"
+    />
   </div>
 </template>
 
@@ -101,6 +131,7 @@ import {
   mdiMagnify,
   mdiCheck,
   mdiCheckAll,
+  mdiPlus,
 } from "@mdi/js";
 
 export default {
@@ -125,6 +156,7 @@ export default {
         mdiMagnify,
         mdiCheck,
         mdiCheckAll,
+        mdiPlus,
       },
       startDate: null,
       endDate: null,
@@ -143,6 +175,13 @@ export default {
       catalogId: null,
       status: null,
     };
+  },
+  computed: {
+    paginationVisible() {
+      if (this.$vuetify.breakpoint.xs) return 3;
+      if (this.$vuetify.breakpoint.sm) return 5;
+      return 7;
+    }
   },
   created() {
     this.getCatalog();
@@ -231,16 +270,77 @@ export default {
         timer: 2000,
       });
     },
+    getStatusClass(statusId) {
+      const classes = {
+        SUBMITTED: "status-submitted",
+        INPROGRESS: "status-progress",
+        PENDING: "status-pending",
+        ASSIGNED: "status-assigned",
+        LATE: "status-late",
+        RESOLVED: "status-solved",
+      };
+      return classes[statusId] || "";
+    },
+    getStatusIcon(statusId) {
+      return statusId === "RESOLVED" ? this.icons.mdiCheckAll : this.icons.mdiCheck;
+    },
   },
 };
 </script>
 
 <style scoped>
-.btn-search {
-  background-color: rgb(1, 114, 185) !important;
-  color: white;
-  text-transform: none;
+.helpdesk-container {
   width: 100%;
+}
+
+.main-card {
+  margin-top: 12px;
+}
+
+.status-chip {
+  color: white !important;
+  border-radius: 5px;
+  height: 24px !important;
+}
+
+.status-text {
+  font-size: 10px;
+}
+
+.status-submitted { background-color: #0172b9 !important; }
+.status-progress { background-color: #0172b9 !important; }
+.status-pending { background-color: #ff7a00 !important; }
+.status-assigned { background-color: #a11497 !important; }
+.status-late { background-color: #ec323f !important; }
+.status-solved { background-color: #adc43b !important; }
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.total-data-text {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.table-container {
+  width: 100%;
+}
+
+::v-deep .v-data-table > .v-data-table__wrapper > table {
+  min-width: 100%;
+}
+
+::v-deep .v-data-table tbody tr {
+  cursor: pointer;
+}
+
+::v-deep .v-data-table tbody tr:hover {
+  background-color: #f5f5f5 !important;
 }
 
 .datetime-picker {
@@ -248,6 +348,15 @@ export default {
 }
 
 ::v-deep .mx-input {
-  height: 40px !important;
+  height: 40px;
+  border: 1px solid rgba(0,0,0,0.38);
+  border-radius: 4px;
+  padding: 0 12px;
+}
+
+.btn-blue {
+  background-color: rgb(1, 114, 185) !important;
+  color: white;
+  text-transform: none;
 }
 </style>

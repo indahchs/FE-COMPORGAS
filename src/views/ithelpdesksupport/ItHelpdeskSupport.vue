@@ -1,8 +1,8 @@
 <template>
-  <div style="margin-top: -60px; margin-bottom: 20px;">
+  <div style="margin-top: -80px; margin-bottom: 20px;">
     <v-row>
       <v-col cols="12" sm="12" md="4" lg="3">
-        <v-card style="padding: 2%">
+        <v-card style="padding: 10px">
           <v-list>
             <v-list-item-group v-model="item" color="primary" mandatory>
               <v-list-item 

@@ -368,7 +368,7 @@ export default {
           type: "pie",
         },
         labels: [],
-        colors: ["#0172b9", "#a11497", "#adc43b", "#ffd401", "#ec323f"],
+        colors: ["#0172b9", "#a11497", "#adc43b", "#ff7a00", "#ec323f"],
         legend: {
           position: "bottom",
         },
@@ -387,7 +387,7 @@ export default {
             horizontal: false,
           },
         },
-        colors: ["#0172b9", "#a11497", "#adc43b", "#ffd401", "#ec323f"],
+        colors: ["#0172b9", "#a11497", "#adc43b", "#ff7a00", "#ec323f"],
         xaxis: {
           categories: [],
         },
@@ -717,22 +717,22 @@ export default {
 }
 
 .stat-total {
-  background: linear-gradient(135deg, #0172b9 0%, #015a93 100%);
+  background: linear-gradient(135deg, #0172b9, #69b1df);
   color: white;
 }
 
 .stat-primary {
-  background: linear-gradient(135deg, #a11497 0%, #810d77 100%);
+  background: linear-gradient(135deg, #a11497, #c554bb);
   color: white;
 }
 
 .stat-secondary {
-  background: linear-gradient(135deg, #adc43b 0%, #8fa62e 100%);
+  background: linear-gradient(135deg, #adc43b, #c2dc57);
   color: white;
 }
 
 .stat-success {
-  background: linear-gradient(135deg, #ffd401 0%, #e6be00 100%);
+  background: linear-gradient(135deg, #ff7a00, #e6be00);
   color: white;
 }
 

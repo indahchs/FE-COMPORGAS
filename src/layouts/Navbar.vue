@@ -1,8 +1,8 @@
 <template>
   <v-app>
-    <v-app-bar style="height: 70px !important" app flat absolute color="white">
+    <v-app-bar app flat absolute color="white" class="custom-appbar">
       <div class="boxed-container w-full">
-        <div class="d-flex align-center navbar-content" style="height: 70px;">
+        <div class="navbar-content normal-view">
           <div class="logo-container" @click="goToHome">
             <img class="logo" src="../assets/images/logos/comporgas.png" alt="Comporgas Logo" />
           </div>
@@ -23,6 +23,24 @@
             <app-bar-user-menu></app-bar-user-menu>
 
             <v-btn icon class="hidden-md-and-up mobile-menu-btn" @click="mobileMenuOpen = !mobileMenuOpen">
+              <v-icon>{{ mobileMenuOpen ? icons.mdiClose : icons.mdiMenu }}</v-icon>
+            </v-btn>
+          </div>
+        </div>
+
+        <!-- TAMPILAN 480px (2 BARIS) -->
+        <div class="navbar-480">
+          <div class="row-logo">
+            <div class="logo-container" @click="goToHome">
+              <img class="logo" src="../assets/images/logos/comporgas.png" alt="Comporgas Logo" />
+            </div>
+          </div>
+          <div class="row-menu">
+            <div class="d-flex align-center user-menu">
+              <AppBarNotification @clicked="onClickChild"></AppBarNotification>
+              <app-bar-user-menu></app-bar-user-menu>
+            </div>
+            <v-btn icon @click="mobileMenuOpen = !mobileMenuOpen">
               <v-icon>{{ mobileMenuOpen ? icons.mdiClose : icons.mdiMenu }}</v-icon>
             </v-btn>
           </div>
@@ -232,6 +250,22 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.custom-appbar {
+  height: 70px !important;
+}
+
+.normal-view {
+  display: flex;
+  align-items: center;
+  height: 70px;
+  position: relative;
+  padding: 0 20px;
+}
+
+.navbar-480 {
+  display: none;
+}
+
 .navbar-content {
   position: relative;
   padding: 0 20px;
@@ -289,7 +323,7 @@ export default {
   outline: none;
   white-space: nowrap;
   padding: 0 8px;
-  font-size: 14px;
+  font-size: 12px;
 
   &.active {
     color: #0172B9;
@@ -341,7 +375,7 @@ export default {
 }
 
 .main-container {
-  margin-top: 70px;
+  margin-top: 90px;
 }
 
 .boxed-container {
@@ -377,7 +411,7 @@ export default {
 .footer-address,
 .footer-email {
   color: white;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .footer-social {
@@ -396,13 +430,23 @@ export default {
 
   .custom-tab {
     min-width: 65px;
-    font-size: 13px;
+    font-size: 12px;
+  }
+
+  .logo {
+    width: 160px !important;
+    height: 38px !important;
   }
 }
 
 @media (max-width: 1200px) {
   .custom-tabs {
     gap: 12px;
+  }
+
+  .logo {
+    width: 130px !important;
+    height: auto !important;
   }
 
   .custom-tab {
@@ -422,10 +466,6 @@ export default {
     height: 38px !important;
   }
 
-  .user-menu {
-    gap: 6px;
-  }
-
   .boxed-container {
     max-width: 100%;
     padding: 0 10px;
@@ -433,18 +473,9 @@ export default {
 }
 
 @media (max-width: 768px) {
-  .navbar-content {
-    padding: 0 10px;
-    height: 70px !important;
-  }
-
   .logo {
     width: 150px !important;
-    height: 36px !important;
-  }
-
-  .user-menu {
-    gap: 5px;
+    height: auto !important;
   }
 
   .app-content-container {
@@ -475,12 +506,8 @@ export default {
   }
 
   .logo {
-    width: 135px !important;
-    height: 32px !important;
-  }
-
-  .user-menu {
-    gap: 4px;
+    width: 160px !important;
+    height: 38px !important;
   }
 
   .mobile-menu-btn {
@@ -493,23 +520,48 @@ export default {
 
   .footer-address,
   .footer-email {
-    font-size: 13px;
+    font-size: 12px;
   }
 }
 
 @media (max-width: 480px) {
-  .navbar-content {
-    padding: 0 6px;
+  .normal-view {
+    display: none !important;
+  }
+
+  .navbar-480 {
+    display: block !important;
+  }
+
+  .custom-appbar {
+    height: 135px !important;
+  }
+
+  .row-logo {
+    padding-top: 120px;
+    padding-bottom: 10px;
+    text-align: center;
+  }
+
+  .row-menu {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 10px;
+  }
+
+  .main-container {
+    margin-top: 160px !important;
   }
 
   .logo {
-    width: 120px !important;
-    height: 29px !important;
+    width: 180px !important;
+    height: auto !important;
   }
 
   .mobile-nav-item {
     padding: 8px 10px;
-    font-size: 13px;
+    font-size: 12px;
   }
 
   .footer-text {

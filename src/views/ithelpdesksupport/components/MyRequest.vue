@@ -94,8 +94,6 @@
         </v-row>
       </v-card-text>
 
-     
-
       <!-- Table -->
       <v-card-text class="pa-0 pa-sm-2">
         <div class="table-container">
@@ -106,7 +104,6 @@
             :items="tickets"
             @click:row="viewDetail"
             :mobile-breakpoint="0"
-            class="elevation-0"
           >
             <template #[`item.createdAt`]="{ item }">
               <span class="text-no-wrap">{{ formatDate(item.createdAt) }}</span>
@@ -397,7 +394,6 @@ export default {
   width: 100%;
 }
 
-/* Status Cards */
 .status-cards {
   background: #f5f5f5;
   padding: 12px;
@@ -434,17 +430,14 @@ export default {
 .late { background: linear-gradient(135deg, #ec323f, #d87479); }
 .solved { background: linear-gradient(135deg, #adc43b, #c2dc57); }
 
-/* Status Chips */
 .status-chip {
   color: white !important;
-  border-radius: 4px;
-  font-weight: 500;
-  font-size: 11px;
+  border-radius: 5px;
   height: 24px !important;
 }
 
 .status-text {
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .status-submitted { background-color: #0172b9 !important; }
@@ -454,7 +447,6 @@ export default {
 .status-late { background-color: #ec323f !important; }
 .status-solved { background-color: #adc43b !important; }
 
-/* Pagination */
 .pagination-wrapper {
   display: flex;
   justify-content: space-between;
@@ -468,9 +460,7 @@ export default {
   font-size: 13px;
 }
 
-/* Table */
 .table-container {
-  overflow-x: auto;
   width: 100%;
 }
 
@@ -485,7 +475,6 @@ export default {
   background-color: #f5f5f5 !important;
 }
 
-/* Date Picker */
 .datetime-picker {
   width: 100%;
 }
@@ -497,7 +486,6 @@ export default {
   padding: 0 12px;
 }
 
-/* Button */
 .btn-blue {
   background-color: rgb(1, 114, 185) !important;
   color: white;
