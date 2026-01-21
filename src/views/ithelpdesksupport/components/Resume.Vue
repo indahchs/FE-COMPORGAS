@@ -672,32 +672,121 @@ export default {
     async exportToExcel() {
       this.exporting = true;
       try {
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        const headers = ["Name", "PIC", "Ticket", "Date", "Title", "Service", "Location", "Status"];
-        const csvData = this.items.map(item => [
-          item.userName || "", item.picName || "", item.number || "",
-          this.formatDate(item.createdAt), item.title || "",
-          item.catalogName || "", item.officeName || "", item.statusName || ""
-        ]);
-        const csvContent = [
-          headers.join(","),
-          ...csvData.map(row => row.map(cell => `"${cell}"`).join(","))
-        ].join("\n");
-        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        this.showSnackbar(`Loading data for ${this.currentPeriodText}...`, "info");
+        
+        // Load semua data dulu
+        this.statusFilter = null;
+        await this.loadTableData();
+
+        if (!this.items || this.items.length === 0) {
+          this.showSnackbar("No data to export", "warning");
+          this.exporting = false;
+          return;
+        }
+
+        // Filter berdasarkan year dan month
+        const filteredItems = this.items.filter(item => {
+          const itemDate = moment(item.createdAt);
+          const itemYear = itemDate.year();
+          const itemMonth = itemDate.month() + 1; // moment month is 0-indexed
+          
+          return itemYear === this.globalYear && itemMonth === this.globalMonth;
+        });
+
+        if (filteredItems.length === 0) {
+          this.showSnackbar(`No tickets found for ${this.currentPeriodText}`, "warning");
+          this.exporting = false;
+          return;
+        }
+
+        // Header kolom Excel
+        const headers = ["No", "Name", "PIC", "Ticket Number", "Created Date", "Title", "Service Category", "Location/Office", "Status"];
+        
+        // Buat HTML table untuk Excel
+        let tableHTML = `
+          <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+          <head>
+            <meta charset="utf-8">
+            <!--[if gte mso 9]>
+            <xml>
+              <x:ExcelWorkbook>
+                <x:ExcelWorksheets>
+                  <x:ExcelWorksheet>
+                    <x:Name>Tickets</x:Name>
+                    <x:WorksheetOptions>
+                      <x:DisplayGridlines/>
+                    </x:WorksheetOptions>
+                  </x:ExcelWorksheet>
+                </x:ExcelWorksheets>
+              </x:ExcelWorkbook>
+            </xml>
+            <![endif]-->
+            <style>
+              table { border-collapse: collapse; width: 100%; }
+              th { background-color: #4CAF50; color: white; font-weight: bold; padding: 12px; text-align: left; border: 1px solid #ddd; }
+              td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+              tr:nth-child(even) { background-color: #f2f2f2; }
+            </style>
+          </head>
+          <body>
+            <table>
+              <thead>
+                <tr>
+        `;
+        
+        // Tambahkan header
+        headers.forEach(header => {
+          tableHTML += `<th>${header}</th>`;
+        });
+        tableHTML += `</tr></thead><tbody>`;
+        
+        // Tambahkan data rows yang sudah difilter
+        filteredItems.forEach((item, index) => {
+          tableHTML += `<tr>
+            <td>${index + 1}</td>
+            <td>${this.escapeHTML(item.userName || "-")}</td>
+            <td>${this.escapeHTML(item.picName || "-")}</td>
+            <td>${this.escapeHTML(item.number || "-")}</td>
+            <td>${this.formatDate(item.createdAt)}</td>
+            <td>${this.escapeHTML(item.title || "-")}</td>
+            <td>${this.escapeHTML(item.catalogName || "-")}</td>
+            <td>${this.escapeHTML(item.officeName || "-")}</td>
+            <td>${this.escapeHTML(item.statusName || "-")}</td>
+          </tr>`;
+        });
+        
+        tableHTML += `</tbody></table></body></html>`;
+        
+        const blob = new Blob([tableHTML], { type: "application/vnd.ms-excel" });
+        const url = window.URL.createObjectURL(blob);
         const link = document.createElement("a");
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", `tickets_${this.currentPeriodText}.csv`);
-        link.style.visibility = "hidden";
+        const fileName = `Helpdesk_Tickets_${this.currentPeriodText.replace(/ /g, '_')}_${moment().format('YYYYMMDD_HHmmss')}.xls`;
+        
+        link.href = url;
+        link.download = fileName;
+        link.style.display = "none";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        this.showSnackbar("Exported successfully", "success");
+        window.URL.revokeObjectURL(url);
+        
+        this.showSnackbar(`Exported ${filteredItems.length} tickets for ${this.currentPeriodText}`, "success");
       } catch (error) {
-        this.showSnackbar("Export error", "error");
+        console.error("Export error:", error);
+        this.showSnackbar("Export error. Please try again.", "error");
       } finally {
         this.exporting = false;
       }
+    },
+    escapeHTML(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    },
+    escapeHTML(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
     },
     formatDate(date) {
       return moment(date).format("DD MMM YYYY");

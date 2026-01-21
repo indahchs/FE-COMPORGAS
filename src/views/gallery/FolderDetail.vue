@@ -121,7 +121,7 @@
         <v-row v-else-if="folderPhotos.length > 0">
           <v-col v-for="photo in folderPhotos" :key="photo.id" cols="6" sm="4" md="3" lg="2">
             <v-card hover class="photo-card" @click="openImagePreview(photo)">
-              <v-img :src="getPhotoUrl(photo)" height="150" cover>
+              <v-img :src="getThumbnailUrl(photo)" height="150" cover>
                 <v-card-actions v-if="canDeletePhoto" class="pa-1" style="position: absolute; top: 0; right: 0;">
                   <v-btn icon x-small @click.stop="confirmDeletePhoto(photo)" class="delete-btn">
                     <v-icon color="red" small>{{ icons.mdiDelete }}</v-icon>
@@ -135,7 +135,30 @@
           </v-col>
         </v-row>
 
-        <v-row v-else class="justify-center">
+        <v-row v-if="totalPages > 1" class="mt-6">
+          <v-col cols="12">
+            <div class="d-flex justify-center align-center">
+              <v-btn icon @click="prevPage" :disabled="currentPage === 0" class="mx-2">
+                <v-icon>{{ icons.mdiChevronLeft }}</v-icon>
+              </v-btn>
+
+              <div class="mx-4 text-center">
+                <div class="font-weight-bold">
+                  Page {{ currentPage + 1 }} of {{ totalPages }}
+                </div>
+                <div class="text-caption grey--text">
+                  ({{ totalElements }} total photos)
+                </div>
+              </div>
+
+              <v-btn icon @click="nextPage" :disabled="currentPage >= totalPages - 1" class="mx-2">
+                <v-icon>{{ icons.mdiChevronRight }}</v-icon>
+              </v-btn>
+            </div>
+          </v-col>
+        </v-row>
+
+        <v-row v-if="!loading && !error && folderPhotos.length === 0" class="justify-center">
           <v-col cols="12" class="text-center">
             <v-icon size="64" color="grey">{{ icons.mdiImageOff }}</v-icon>
             <div class="mt-3 grey--text">No photos in this folder</div>
@@ -420,7 +443,11 @@ export default {
       successMessage: '',
       errorSnackbar: false,
       errorMessage: '',
-      currentPhotoIndex: -1
+      currentPhotoIndex: -1,
+      currentPage: 0,
+      totalPages: 0,
+      totalElements: 0,
+      pageSize: 24,
     }
   },
   computed: {
@@ -492,18 +519,27 @@ export default {
     }
   },
   methods: {
-    async fetchFolderDetail() {
+    async fetchFolderDetail(page = 0) {
       this.loading = true
       this.error = null
 
       try {
-        const photosResponse = await GalleryService.getFolderPhotos(this.folderId)
+        const photosResponse = await GalleryService.getFolderPhotos(
+          this.folderId,
+          {
+            page: page,
+            size: this.pageSize
+          }
+        );
         if (photosResponse.data && photosResponse.data.data) {
           if (photosResponse.data.data.content) {
             this.folderPhotos = photosResponse.data.data.content.map(photo => ({
               ...photo,
               generatedFileName: photo.generatedFileName || null
-            }))
+            }));
+            this.currentPage = photosResponse.data.data.number || 0;
+            this.totalPages = photosResponse.data.data.totalPages || 1;
+            this.totalElements = photosResponse.data.data.totalElements || 0;
           } else if (Array.isArray(photosResponse.data.data)) {
             this.folderPhotos = photosResponse.data.data.map(photo => ({
               ...photo,
@@ -582,15 +618,19 @@ export default {
     },
 
     async fetchFolderPhotos() {
-      await this.fetchFolderDetail()
+      await this.fetchFolderDetail(this.page)
     },
 
     goBack() {
       this.$router.push('/gallery')
     },
 
+    getThumbnailUrl(photo) {
+      return this.api + "g/gallery/thumbnails/" + photo.filePath
+    },
+
     getPhotoUrl(photo) {
-      return this.api + "gallery/" + photo.filePath
+      return this.api + "g/gallery/" + photo.filePath
     },
 
     formatDate(dateString) {
@@ -1178,7 +1218,25 @@ export default {
           this.imagePreviewDialog = false;
           break;
       }
-    }
+    },
+
+    nextPage() {
+      if (this.currentPage < this.totalPages - 1) {
+        this.fetchFolderDetail(this.currentPage + 1);
+      }
+    },
+
+    prevPage() {
+      if (this.currentPage > 0) {
+        this.fetchFolderDetail(this.currentPage - 1);
+      }
+    },
+
+    goToPage(pageNumber) {
+      if (pageNumber >= 0 && pageNumber < this.totalPages) {
+        this.fetchFolderDetail(pageNumber);
+      }
+    },
   },
 
   beforeDestroy() {
