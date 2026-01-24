@@ -579,7 +579,7 @@ export default {
         }
       }
       
-      return uniqueRecent.slice(0, 12)
+      return uniqueRecent.slice(0, 9)
     },
     
     // Stats
@@ -664,7 +664,7 @@ export default {
         viewedAt: new Date().toISOString()
       })
       
-      this.recentViewedItems = this.recentViewedItems.slice(0, 20)
+      this.recentViewedItems = this.recentViewedItems.slice(0, 8)
       this.saveRecentViewed()
     },
     
