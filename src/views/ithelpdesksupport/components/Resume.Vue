@@ -151,25 +151,25 @@
               <v-select dense outlined hide-details v-model="globalMonth" :items="monthList" item-text="name" item-value="value" label="Month" @change="updateAllFilters"></v-select>
             </v-col>
             <v-col cols="6" sm="4" md="2" class="pa-1 pa-sm-2">
-              <v-btn block color="primary" @click="refreshAllData" :loading="isLoading" small>
+              <v-btn block color="primary" @click="refreshAllData" :loading="isLoading" big>
                 <v-icon left small>{{ icons.mdiRefresh }}</v-icon>
                 <span class="hidden-xs-only">Refresh</span>
               </v-btn>
             </v-col>
             <v-col cols="6" sm="4" md="2" class="pa-1 pa-sm-2">
-              <v-btn block color="success" @click="exportToExcel" :loading="exporting" small>
+              <v-btn block color="success" @click="exportToExcel" :loading="exporting" big>
                 <v-icon left small>{{ icons.mdiDownload }}</v-icon>
                 <span class="hidden-xs-only">Export</span>
               </v-btn>
             </v-col>
             <v-col cols="6" sm="4" md="2" class="pa-1 pa-sm-2">
-              <v-btn block color="info" @click="toggleView" small>
+              <v-btn block color="info" @click="toggleView" big>
                 <v-icon left small>{{ isChart ? icons.mdiTable : icons.mdiChartBar }}</v-icon>
                 {{ isChart ? "Table" : "Charts" }}
               </v-btn>
             </v-col>
             <v-col cols="6" sm="4" md="2" class="pa-1 pa-sm-2">
-              <v-btn block color="purple" dark @click="showComparison" small>
+              <v-btn block color="purple" dark @click="showComparison" big>
                 <v-icon left small>{{ icons.mdiChartLine }}</v-icon>
                 <span class="hidden-xs-only">Compare</span>
               </v-btn>
@@ -917,27 +917,27 @@ export default {
 }
 
 .all-ticket {
-  background: linear-gradient(135deg, #9a9a9a 0%, #7a7a7a 100%);
+  background: linear-gradient(135deg, #9a9a9a, #e0c7c7);
 }
 
 .assigned-ticket {
-  background: linear-gradient(135deg, #a11497 0%, #810d77 100%);
+  background: linear-gradient(135deg,  #a11497, #c554bb);
 }
 
 .progress-ticket {
-  background: linear-gradient(135deg, #0172b9 0%, #015a93 100%);
+  background: linear-gradient(135deg, #0172b9, #69b1df);
 }
 
 .pending-ticket {
-  background: linear-gradient(135deg, #ffd401 0%, #e6be00 100%);
+  background: linear-gradient(135deg, #ff7a00, #e6be00);
 }
 
 .late-ticket {
-  background: linear-gradient(135deg, #ec323f 0%, #c9262f 100%);
+  background: linear-gradient(135deg, #ec323f, #d87479);
 }
 
 .solved-ticket {
-  background: linear-gradient(135deg, #adc43b 0%, #8fa62e 100%);
+  background: linear-gradient(135deg, #adc43b, #c2dc57);
 }
 
 .table-wrapper {
