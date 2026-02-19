@@ -208,8 +208,7 @@
             <v-col cols="12" lg="6" class="pa-1 pa-sm-2">
               <v-card outlined>
                 <v-card-title class="text-subtitle-2 text-sm-subtitle-1 pa-2 pa-sm-3">
-                  <v-icon left color="primary" small>{{ icons.mdiChartBar }}</v-icon>
-                  Tickets by Day
+                  <v-icon left color="primary" small>{{ icons.mdiChartBar }}</v-icon>Tickets by Day
                 </v-card-title>
                 <v-card-text class="pa-2">
                   <apexchart ref="chartDailyRef" type="bar" :height="chartHeight" :options="chartDailyOptions" :series="seriesDaily"></apexchart>
@@ -219,8 +218,7 @@
             <v-col cols="12" lg="6" class="pa-1 pa-sm-2">
               <v-card outlined>
                 <v-card-title class="text-subtitle-2 text-sm-subtitle-1 pa-2 pa-sm-3">
-                  <v-icon left color="primary" small>{{ icons.mdiShape }}</v-icon>
-                  Tickets by Category
+                  <v-icon left color="primary" small>{{ icons.mdiShape }}</v-icon>Tickets by Category
                 </v-card-title>
                 <v-card-text class="pa-2">
                   <apexchart ref="chartCategoryRef" type="bar" :height="chartHeight" :options="chartCategoryOptions" :series="seriesCategory"></apexchart>
@@ -230,8 +228,7 @@
             <v-col cols="12" lg="6" class="pa-1 pa-sm-2">
               <v-card outlined>
                 <v-card-title class="text-subtitle-2 text-sm-subtitle-1 pa-2 pa-sm-3">
-                  <v-icon left color="primary" small>{{ icons.mdiAccount }}</v-icon>
-                  Tickets by Assignee
+                  <v-icon left color="primary" small>{{ icons.mdiAccount }}</v-icon>Tickets by Assignee
                 </v-card-title>
                 <v-card-text class="pa-2">
                   <apexchart ref="chartPicRef" type="bar" :height="chartHeight" :options="chartPicOptions" :series="seriesPic"></apexchart>
@@ -241,8 +238,7 @@
             <v-col cols="12" lg="6" class="pa-1 pa-sm-2">
               <v-card outlined>
                 <v-card-title class="text-subtitle-2 text-sm-subtitle-1 pa-2 pa-sm-3">
-                  <v-icon left color="primary" small>{{ icons.mdiMapMarker }}</v-icon>
-                  Tickets by Location
+                  <v-icon left color="primary" small>{{ icons.mdiMapMarker }}</v-icon>Tickets by Location
                 </v-card-title>
                 <v-card-text class="pa-2">
                   <apexchart ref="chartOfficeRef" type="bar" :height="chartHeight" :options="chartOfficeOptions" :series="seriesOffice"></apexchart>
@@ -269,16 +265,26 @@
       <!-- Table View -->
       <v-card class="mt-3" v-else>
         <v-card-title class="flex-column flex-sm-row pa-2 pa-sm-3">
-          <div class="d-flex align-center">
+          <div class="d-flex align-center flex-wrap">
             <v-icon left>{{ icons.mdiTable }}</v-icon>
-            <span class="text-subtitle-1 text-sm-h6">Ticket List</span>
+            <span class="text-subtitle-1 text-sm-h6">{{ titleHeader || 'Ticket List' }}</span>
+            <v-chip class="ml-2" small outlined color="primary">{{ currentPeriodText }}</v-chip>
           </div>
           <v-spacer class="hidden-xs-only"></v-spacer>
           <v-text-field v-model="search" append-icon="mdi-magnify" label="Search" single-line hide-details clearable outlined dense class="mt-2 mt-sm-0" style="max-width: 400px"></v-text-field>
         </v-card-title>
         <v-card-text class="pa-0 pa-sm-2">
           <div class="table-wrapper">
-            <v-data-table :headers="tableHeaders" :items="items" :search="search" :loading="isLoading" @click:row="openTicketDetail" class="elevation-0 row-pointer" :mobile-breakpoint="0" :footer-props="{ 'items-per-page-options': [10, 25, 50, 100] }">
+            <v-data-table
+              :headers="tableHeaders"
+              :items="items"
+              :search="search"
+              :loading="isLoading"
+              @click:row="openTicketDetail"
+              class="elevation-0 row-pointer"
+              :mobile-breakpoint="0"
+              :footer-props="{ 'items-per-page-options': [10, 25, 50, 100] }"
+            >
               <template #[`item.number`]="{ item }">
                 <v-chip small color="primary" outlined>{{ item.number }}</v-chip>
               </template>
@@ -328,7 +334,8 @@ export default {
     return {
       isLoading: false, exporting: false, isChart: true, isPersonal: false,
       search: "", detailDialog: false, comparisonDialog: false,
-      selectedTicket: null, currentFilter: null, statusFilter: null,
+      selectedTicket: null, currentFilter: null,
+      statusFilter: null,
       snackbar: { show: false, message: "", color: "success" },
       comparisonData: { previous: [], current: [] },
       globalYear: new Date().getFullYear(),
@@ -357,12 +364,12 @@ export default {
         { text: "Actions", value: "actions", sortable: false },
       ],
       items: [],
-      seriesDaily: [{ name: "Tickets", data: [] }],
-      seriesCategory: [{ name: "Tickets", data: [] }],
-      seriesPic: [{ name: "Tickets", data: [] }],
-      seriesOffice: [{ name: "Tickets", data: [] }],
+      seriesDaily:   [{ name: "Tickets", data: [] }],
+      seriesCategory:[{ name: "Tickets", data: [] }],
+      seriesPic:     [{ name: "Tickets", data: [] }],
+      seriesOffice:  [{ name: "Tickets", data: [] }],
       seriesStack: [
-        { name: "Avg SLA", type: "bar", data: [] },
+        { name: "Avg SLA", type: "bar",  data: [] },
         { name: "Max SLA", type: "line", data: [] },
       ],
       chartDailyOptions: {}, chartCategoryOptions: {},
@@ -372,12 +379,12 @@ export default {
   computed: {
     ticketStats() {
       return [
-        { title: "All Tickets", value: this.allTickets, icon: this.icons.mdiTicketConfirmationOutline, class: "all-ticket", filter: "all", hover: false },
-        { title: "Assigned", value: this.assignedTickets, icon: this.icons.mdiClipboardArrowRightOutline, class: "assigned-ticket", filter: "assigned", hover: false },
-        { title: "In Progress", value: this.progressTickets, icon: this.icons.mdiLoading, class: "progress-ticket", filter: "progress", hover: false },
-        { title: "Pending", value: this.pendingTickets, icon: this.icons.mdiClipboardTextClockOutline, class: "pending-ticket", filter: "pending", hover: false },
-        { title: "Late", value: this.lateTickets, icon: this.icons.mdiClipboardAlertOutline, class: "late-ticket", filter: "late", hover: false },
-        { title: "Solved", value: this.solvedTickets, icon: this.icons.mdiCheckDecagramOutline, class: "solved-ticket", filter: "solved", hover: false },
+        { title: "All Tickets", value: this.allTickets,      icon: this.icons.mdiTicketConfirmationOutline,  class: "all-ticket",      filter: "all",      hover: false },
+        { title: "Assigned",    value: this.assignedTickets, icon: this.icons.mdiClipboardArrowRightOutline, class: "assigned-ticket", filter: "assigned", hover: false },
+        { title: "In Progress", value: this.progressTickets, icon: this.icons.mdiLoading,                   class: "progress-ticket", filter: "progress", hover: false },
+        { title: "Pending",     value: this.pendingTickets,  icon: this.icons.mdiClipboardTextClockOutline,  class: "pending-ticket",  filter: "pending",  hover: false },
+        { title: "Late",        value: this.lateTickets,     icon: this.icons.mdiClipboardAlertOutline,      class: "late-ticket",     filter: "late",     hover: false },
+        { title: "Solved",      value: this.solvedTickets,   icon: this.icons.mdiCheckDecagramOutline,       class: "solved-ticket",   filter: "solved",   hover: false },
       ];
     },
     currentPeriodText() {
@@ -385,37 +392,29 @@ export default {
       return `${monthName} ${this.globalYear}`;
     },
     slaPerformanceColor() {
-      if (this.seriesStack[0].data.length === 0) return "grey";
+      if (!this.seriesStack[0].data.length) return "grey";
       const avgSLA = this.seriesStack[0].data.reduce((a, b) => a + b, 0) / this.seriesStack[0].data.length;
       const maxSLA = Math.max(...this.seriesStack[1].data);
-      const ratio = avgSLA / maxSLA;
-      if (ratio < 0.5) return "success";
+      const ratio  = avgSLA / maxSLA;
+      if (ratio < 0.5)  return "success";
       if (ratio < 0.75) return "warning";
       return "error";
     },
     slaPerformanceText() {
-      const color = this.slaPerformanceColor;
-      if (color === "success") return "Excellent";
-      if (color === "warning") return "Good";
-      if (color === "error") return "Attention";
-      return "No Data";
+      return { success: "Excellent", warning: "Good", error: "Attention", grey: "No Data" }[this.slaPerformanceColor];
     },
     tableHeaders() {
-      if (this.$vuetify.breakpoint.xs) {
-        return [
-          { text: "Ticket", value: "number" },
-          { text: "Title", value: "title" },
-          { text: "Status", value: "statusName" },
-        ];
-      }
-      if (this.$vuetify.breakpoint.sm) {
-        return [
-          { text: "Ticket", value: "number" },
-          { text: "Date", value: "createdAt" },
-          { text: "Title", value: "title" },
-          { text: "Status", value: "statusName" },
-        ];
-      }
+      if (this.$vuetify.breakpoint.xs) return [
+        { text: "Ticket", value: "number" },
+        { text: "Title",  value: "title" },
+        { text: "Status", value: "statusName" },
+      ];
+      if (this.$vuetify.breakpoint.sm) return [
+        { text: "Ticket", value: "number" },
+        { text: "Date",   value: "createdAt" },
+        { text: "Title",  value: "title" },
+        { text: "Status", value: "statusName" },
+      ];
       return this.headers;
     },
     chartHeight() {
@@ -423,9 +422,7 @@ export default {
       if (this.$vuetify.breakpoint.sm) return 300;
       return 350;
     },
-    iconSize() {
-      return this.$vuetify.breakpoint.xs ? 24 : 32;
-    }
+    iconSize() { return this.$vuetify.breakpoint.xs ? 24 : 32; },
   },
   mounted() {
     this.initializeChartOptions();
@@ -433,11 +430,11 @@ export default {
   },
   methods: {
     initializeChartOptions() {
-      this.chartDailyOptions = this.getBaseChartOptions("Date", "Tickets");
+      this.chartDailyOptions    = this.getBaseChartOptions("Date", "Tickets");
       this.chartCategoryOptions = this.getBaseChartOptions("Category", "Tickets");
-      this.chartPicOptions = this.getBaseChartOptions("Assignee", "Tickets");
-      this.chartOfficeOptions = this.getBaseChartOptions("Location", "Tickets");
-      this.chartOptionsStack = this.getSLAChartOptions();
+      this.chartPicOptions      = this.getBaseChartOptions("Assignee", "Tickets");
+      this.chartOfficeOptions   = this.getBaseChartOptions("Location", "Tickets");
+      this.chartOptionsStack    = this.getSLAChartOptions();
     },
     async initializeDashboard() {
       this.isLoading = true;
@@ -445,29 +442,29 @@ export default {
         await this.getYearOptions();
         await this.loadAllData();
         this.showSnackbar("Dashboard loaded", "success");
-      } catch (error) {
+      } catch (e) {
         this.showSnackbar("Error loading dashboard", "error");
       } finally {
         this.isLoading = false;
       }
     },
     async loadAllData() {
-      const promises = [
+      await Promise.all([
         this.getAllTicketsCount(), this.getTicketAssignedCount(),
         this.getTicketInProgressCount(), this.getTicketPendingCount(),
         this.getTicketResolvedCount(), this.getTicketLateCount(),
         this.getTicketsByMonth(), this.getTicketsByCategory(),
         this.getTicketsByPic(), this.getTicketsByOffice(),
         this.getTicketsByCategorySlaHours(),
-      ];
-      await Promise.all(promises);
+      ]);
     },
     async refreshAllData() {
       this.isLoading = true;
       try {
         await this.loadAllData();
+        if (!this.isChart) await this.loadTableData();
         this.showSnackbar("Data refreshed", "success");
-      } catch (error) {
+      } catch (e) {
         this.showSnackbar("Error refreshing", "error");
       } finally {
         this.isLoading = false;
@@ -475,191 +472,187 @@ export default {
     },
     async updateAllFilters() {
       this.isLoading = true;
-      try { await this.loadAllData(); } 
-      finally { this.isLoading = false; }
-    },
-    async getAllTicketsCount() {
       try {
-        const param = { year: this.globalYear, month: this.globalMonth };
-        const res = await dashboardService.getAllTicketsCount(param);
-        this.allTickets = res.data.data || 0;
-      } catch (error) { this.allTickets = 0; }
+        await this.loadAllData();
+        if (!this.isChart) await this.loadTableData();
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    // API Count
+    async getAllTicketsCount() {
+      try { this.allTickets      = (await dashboardService.getAllTicketsCount({ year: this.globalYear, month: this.globalMonth })).data.data || 0; } catch { this.allTickets = 0; }
     },
     async getTicketAssignedCount() {
-      try {
-        const param = { year: this.globalYear, month: this.globalMonth };
-        const res = await dashboardService.getTicketAssignedCount(param);
-        this.assignedTickets = res.data.data || 0;
-      } catch (error) { this.assignedTickets = 0; }
+      try { this.assignedTickets = (await dashboardService.getTicketAssignedCount({ year: this.globalYear, month: this.globalMonth })).data.data || 0; } catch { this.assignedTickets = 0; }
     },
     async getTicketInProgressCount() {
-      try {
-        const param = { year: this.globalYear, month: this.globalMonth };
-        const res = await dashboardService.getTicketInProgressCount(param);
-        this.progressTickets = res.data.data || 0;
-      } catch (error) { this.progressTickets = 0; }
+      try { this.progressTickets = (await dashboardService.getTicketInProgressCount({ year: this.globalYear, month: this.globalMonth })).data.data || 0; } catch { this.progressTickets = 0; }
     },
     async getTicketPendingCount() {
-      try {
-        const param = { year: this.globalYear, month: this.globalMonth };
-        const res = await dashboardService.getTicketPendingCount(param);
-        this.pendingTickets = res.data.data || 0;
-      } catch (error) { this.pendingTickets = 0; }
+      try { this.pendingTickets  = (await dashboardService.getTicketPendingCount({ year: this.globalYear, month: this.globalMonth })).data.data || 0; } catch { this.pendingTickets = 0; }
     },
     async getTicketResolvedCount() {
-      try {
-        const param = { year: this.globalYear, month: this.globalMonth };
-        const res = await dashboardService.getTicketResolvedCount(param);
-        this.solvedTickets = res.data.data || 0;
-      } catch (error) { this.solvedTickets = 0; }
+      try { this.solvedTickets   = (await dashboardService.getTicketResolvedCount({ year: this.globalYear, month: this.globalMonth })).data.data || 0; } catch { this.solvedTickets = 0; }
     },
     async getTicketLateCount() {
-      try {
-        const param = { year: this.globalYear, month: this.globalMonth };
-        const res = await dashboardService.getTicketLateCount(param);
-        this.lateTickets = res.data.data || 0;
-      } catch (error) { this.lateTickets = 0; }
+      try { this.lateTickets     = (await dashboardService.getTicketLateCount({ year: this.globalYear, month: this.globalMonth })).data.data || 0; } catch { this.lateTickets = 0; }
     },
+
+    //  API Charts 
     async getTicketsByMonth() {
       try {
-        const param = { year: this.globalYear, month: this.globalMonth };
-        const res = await dashboardService.getTicketCountByMonth(param);
-        const data = res.data.data || [];
-        this.seriesDaily[0].data = data.map(item => item.totalCount);
-        this.chartDailyOptions.xaxis.categories = data.map(item => item.groupName);
-        if (this.$refs.chartDailyRef) this.$refs.chartDailyRef.refresh();
-      } catch (error) { console.error(error); }
+        const data = (await dashboardService.getTicketCountByMonth({ year: this.globalYear, month: this.globalMonth })).data.data || [];
+        this.seriesDaily[0].data = data.map(i => i.totalCount);
+        this.chartDailyOptions.xaxis.categories = data.map(i => i.groupName);
+        this.$refs.chartDailyRef?.refresh();
+      } catch (e) { console.error(e); }
     },
     async getTicketsByCategory() {
       try {
-        const param = { year: this.globalYear, month: this.globalMonth };
-        const res = await dashboardService.getTicketCountByCatalog(param);
-        const data = res.data.data || [];
-        this.seriesCategory[0].data = data.map(item => item.totalCount);
-        this.chartCategoryOptions.xaxis.categories = data.map(item => item.groupName);
-        if (this.$refs.chartCategoryRef) this.$refs.chartCategoryRef.refresh();
-      } catch (error) { console.error(error); }
+        const data = (await dashboardService.getTicketCountByCatalog({ year: this.globalYear, month: this.globalMonth })).data.data || [];
+        this.seriesCategory[0].data = data.map(i => i.totalCount);
+        this.chartCategoryOptions.xaxis.categories = data.map(i => i.groupName);
+        this.$refs.chartCategoryRef?.refresh();
+      } catch (e) { console.error(e); }
     },
     async getTicketsByPic() {
       try {
-        const param = { year: this.globalYear, month: this.globalMonth };
-        const res = await dashboardService.getTicketCountByPic(param);
-        const data = res.data.data || [];
-        this.seriesPic[0].data = data.map(item => item.totalCount);
-        this.chartPicOptions.xaxis.categories = data.map(item => item.groupName);
-        if (this.$refs.chartPicRef) this.$refs.chartPicRef.refresh();
-      } catch (error) { console.error(error); }
+        const data = (await dashboardService.getTicketCountByPic({ year: this.globalYear, month: this.globalMonth })).data.data || [];
+        this.seriesPic[0].data = data.map(i => i.totalCount);
+        this.chartPicOptions.xaxis.categories = data.map(i => i.groupName);
+        this.$refs.chartPicRef?.refresh();
+      } catch (e) { console.error(e); }
     },
     async getTicketsByOffice() {
       try {
-        const param = { year: this.globalYear, month: this.globalMonth };
-        const res = await dashboardService.getTicketCountByOffice(param);
-        const data = res.data.data || [];
-        this.seriesOffice[0].data = data.map(item => item.totalCount);
-        this.chartOfficeOptions.xaxis.categories = data.map(item => item.groupName);
-        if (this.$refs.chartOfficeRef) this.$refs.chartOfficeRef.refresh();
-      } catch (error) { console.error(error); }
+        const data = (await dashboardService.getTicketCountByOffice({ year: this.globalYear, month: this.globalMonth })).data.data || [];
+        this.seriesOffice[0].data = data.map(i => i.totalCount);
+        this.chartOfficeOptions.xaxis.categories = data.map(i => i.groupName);
+        this.$refs.chartOfficeRef?.refresh();
+      } catch (e) { console.error(e); }
     },
     async getTicketsByCategorySlaHours() {
       try {
-        const param = { year: this.globalYear, month: this.globalMonth };
-        const res = await dashboardService.getTicketCountByCatalogSlaHours(param);
-        const data = res.data.data || [];
-        this.chartOptionsStack.xaxis.categories = data.map(item => item.groupName);
-        this.seriesStack[0].data = data.map(item => item.avgSla || 0);
-        this.seriesStack[1].data = data.map(item => item.sla || 0);
-        if (this.$refs.chartSLARef) this.$refs.chartSLARef.refresh();
-      } catch (error) { console.error(error); }
+        const data = (await dashboardService.getTicketCountByCatalogSlaHours({ year: this.globalYear, month: this.globalMonth })).data.data || [];
+        this.chartOptionsStack.xaxis.categories = data.map(i => i.groupName);
+        this.seriesStack[0].data = data.map(i => i.avgSla || 0);
+        this.seriesStack[1].data = data.map(i => i.sla    || 0);
+        this.$refs.chartSLARef?.refresh();
+      } catch (e) { console.error(e); }
     },
     async getYearOptions() {
-      try {
-        const res = await dashboardService.getYearOptions();
-        this.yearOptions = res.data.data || [];
-      } catch (error) {
-        this.yearOptions = [new Date().getFullYear()];
-      }
+      try { this.yearOptions = (await dashboardService.getYearOptions()).data.data || []; }
+      catch { this.yearOptions = [new Date().getFullYear()]; }
     },
+
+    //  Table 
     async viewDetails(title, filter) {
       this.currentFilter = filter;
-      this.titleHeader = title;
+      this.titleHeader   = title;
+
       const statusMap = {
-        'all': null, 'assigned': 'ASSIGNED', 'progress': 'INPROGRESS',
-        'pending': 'PENDING', 'late': 'LATE', 'solved': 'RESOLVED',
+        all:      null,
+        assigned: 'ASSIGNED',
+        progress: 'INPROGRESS',
+        pending:  'PENDING',
+        solved:   'RESOLVED',
+        late:     'LATE',       
       };
       this.statusFilter = statusMap[filter];
-      this.isChart = false;
+      this.isChart      = false;
       await this.loadTableData();
     },
+
     async loadTableData() {
       try {
         this.isLoading = true;
         const param = {
-          keyword: null, location: null, startDate: null, endDate: null,
-          catalog: null, status: this.statusFilter, size: 1000, page: 0,
+          keyword:   null,
+          location:  null,
+          startDate: null,
+          endDate:   null,
+          catalog:   null,
+          status:    this.statusFilter, // null = semua, 'LATE', 'ASSIGNED', dst
+          size:      1000,
+          page:      0,
         };
-        const res = await getTicket.getTicketPic(param);
-        this.items = res.data.data.content || [];
+        const res  = await getTicket.getTicketPic(param);
+        let data   = res.data.data.content || [];
+
+        // Filter tahun & bulan secara client-side dari createdAt
+        // karena API getTicketPic tidak support param year/month
+        data = data.filter(item => {
+          const d = moment(item.createdAt);
+          return d.year() === this.globalYear && (d.month() + 1) === this.globalMonth;
+        });
+
+        this.items = data;
         this.showSnackbar(`Loaded ${this.items.length} tickets`, "success");
-      } catch (error) {
+      } catch (e) {
         this.showSnackbar("Error loading tickets", "error");
         this.items = [];
       } finally {
         this.isLoading = false;
       }
     },
-    openTicketDetail(item) {
-      this.selectedTicket = item;
-      this.detailDialog = true;
+
+    toggleView() {
+      this.isChart = !this.isChart;
+      if (!this.isChart) {
+        this.currentFilter = 'all';
+        this.titleHeader   = 'All Tickets';
+        this.statusFilter  = null;
+        this.loadTableData();
+      }
     },
+    goBack() {
+      this.isChart       = true;
+      this.titleHeader   = "";
+      this.currentFilter = null;
+      this.statusFilter  = null;
+    },
+
+    //  Ticket Actions 
+    openTicketDetail(item) { this.selectedTicket = item; this.detailDialog = true; },
     editTicket(ticket) {
       this.detailDialog = false;
-      this.$router.push({
-        name: "ithelpdesksupport-my-request-detail",
-        params: { id: ticket.id },
-      });
+      this.$router.push({ name: "ithelpdesksupport-my-request-detail", params: { id: ticket.id } });
     },
+
+    //  Comparison 
     async showComparison() {
       this.isLoading = true;
       try {
-        let prevYear = this.globalYear;
-        let prevMonth = this.globalMonth - 1;
-        if (prevMonth === 0) {
-          prevMonth = 12;
-          prevYear -= 1;
-        }
-        const prevParam = { year: prevYear, month: prevMonth };
-        const [prevAll, prevAssigned, prevProgress, prevPending, prevLate, prevSolved] = 
-          await Promise.all([
-            dashboardService.getAllTicketsCount(prevParam),
-            dashboardService.getTicketAssignedCount(prevParam),
-            dashboardService.getTicketInProgressCount(prevParam),
-            dashboardService.getTicketPendingCount(prevParam),
-            dashboardService.getTicketLateCount(prevParam),
-            dashboardService.getTicketResolvedCount(prevParam),
-          ]);
-        const prevData = {
-          all: prevAll.data.data || 0, assigned: prevAssigned.data.data || 0,
-          progress: prevProgress.data.data || 0, pending: prevPending.data.data || 0,
-          late: prevLate.data.data || 0, solved: prevSolved.data.data || 0,
+        let prevYear = this.globalYear, prevMonth = this.globalMonth - 1;
+        if (prevMonth === 0) { prevMonth = 12; prevYear -= 1; }
+        const prev = { year: prevYear, month: prevMonth };
+        const [pAll, pAssigned, pProgress, pPending, pLate, pSolved] = await Promise.all([
+          dashboardService.getAllTicketsCount(prev), dashboardService.getTicketAssignedCount(prev),
+          dashboardService.getTicketInProgressCount(prev), dashboardService.getTicketPendingCount(prev),
+          dashboardService.getTicketLateCount(prev), dashboardService.getTicketResolvedCount(prev),
+        ]);
+        const pd = {
+          all: pAll.data.data || 0, assigned: pAssigned.data.data || 0,
+          progress: pProgress.data.data || 0, pending: pPending.data.data || 0,
+          late: pLate.data.data || 0, solved: pSolved.data.data || 0,
         };
         this.comparisonData.previous = [
-          { name: "All", value: prevData.all },
-          { name: "Assigned", value: prevData.assigned },
-          { name: "Progress", value: prevData.progress },
-          { name: "Pending", value: prevData.pending },
-          { name: "Late", value: prevData.late },
-          { name: "Solved", value: prevData.solved },
+          { name: "All", value: pd.all }, { name: "Assigned", value: pd.assigned },
+          { name: "Progress", value: pd.progress }, { name: "Pending", value: pd.pending },
+          { name: "Late", value: pd.late }, { name: "Solved", value: pd.solved },
         ];
         this.comparisonData.current = [
-          { name: "All", value: this.allTickets, change: this.calculateChange(prevData.all, this.allTickets) },
-          { name: "Assigned", value: this.assignedTickets, change: this.calculateChange(prevData.assigned, this.assignedTickets) },
-          { name: "Progress", value: this.progressTickets, change: this.calculateChange(prevData.progress, this.progressTickets) },
-          { name: "Pending", value: this.pendingTickets, change: this.calculateChange(prevData.pending, this.pendingTickets) },
-          { name: "Late", value: this.lateTickets, change: this.calculateChange(prevData.late, this.lateTickets) },
-          { name: "Solved", value: this.solvedTickets, change: this.calculateChange(prevData.solved, this.solvedTickets) },
+          { name: "All",      value: this.allTickets,      change: this.calculateChange(pd.all,      this.allTickets) },
+          { name: "Assigned", value: this.assignedTickets, change: this.calculateChange(pd.assigned, this.assignedTickets) },
+          { name: "Progress", value: this.progressTickets, change: this.calculateChange(pd.progress, this.progressTickets) },
+          { name: "Pending",  value: this.pendingTickets,  change: this.calculateChange(pd.pending,  this.pendingTickets) },
+          { name: "Late",     value: this.lateTickets,     change: this.calculateChange(pd.late,     this.lateTickets) },
+          { name: "Solved",   value: this.solvedTickets,   change: this.calculateChange(pd.solved,   this.solvedTickets) },
         ];
         this.comparisonDialog = true;
-      } catch (error) {
+      } catch (e) {
         this.showSnackbar("Error loading comparison", "error");
       } finally {
         this.isLoading = false;
@@ -669,222 +662,98 @@ export default {
       if (oldVal === 0) return newVal > 0 ? 100 : 0;
       return Math.round(((newVal - oldVal) / oldVal) * 100);
     },
+
+    //  Export 
     async exportToExcel() {
       this.exporting = true;
       try {
         this.showSnackbar(`Loading data for ${this.currentPeriodText}...`, "info");
-        
-        // Load semua data dulu
-        this.statusFilter = null;
-        await this.loadTableData();
-
-        if (!this.items || this.items.length === 0) {
-          this.showSnackbar("No data to export", "warning");
-          this.exporting = false;
-          return;
-        }
-
-        // Filter berdasarkan year dan month
-        const filteredItems = this.items.filter(item => {
-          const itemDate = moment(item.createdAt);
-          const itemYear = itemDate.year();
-          const itemMonth = itemDate.month() + 1; // moment month is 0-indexed
-          
-          return itemYear === this.globalYear && itemMonth === this.globalMonth;
+        const res  = await getTicket.getTicketPic({ keyword: null, location: null, startDate: null, endDate: null, catalog: null, status: null, size: 1000, page: 0 });
+        const all  = res.data.data.content || [];
+        // Filter berdasarkan periode
+        const data = all.filter(item => {
+          const d = moment(item.createdAt);
+          return d.year() === this.globalYear && (d.month() + 1) === this.globalMonth;
         });
 
-        if (filteredItems.length === 0) {
+        if (!data.length) {
           this.showSnackbar(`No tickets found for ${this.currentPeriodText}`, "warning");
-          this.exporting = false;
           return;
         }
 
-        // Header kolom Excel
         const headers = ["No", "Name", "PIC", "Ticket Number", "Created Date", "Title", "Service Category", "Location/Office", "Status"];
-        
-        // Buat HTML table untuk Excel
-        let tableHTML = `
-          <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-          <head>
-            <meta charset="utf-8">
-            <!--[if gte mso 9]>
-            <xml>
-              <x:ExcelWorkbook>
-                <x:ExcelWorksheets>
-                  <x:ExcelWorksheet>
-                    <x:Name>Tickets</x:Name>
-                    <x:WorksheetOptions>
-                      <x:DisplayGridlines/>
-                    </x:WorksheetOptions>
-                  </x:ExcelWorksheet>
-                </x:ExcelWorksheets>
-              </x:ExcelWorkbook>
-            </xml>
-            <![endif]-->
-            <style>
-              table { border-collapse: collapse; width: 100%; }
-              th { background-color: #4CAF50; color: white; font-weight: bold; padding: 12px; text-align: left; border: 1px solid #ddd; }
-              td { padding: 10px; border: 1px solid #ddd; text-align: left; }
-              tr:nth-child(even) { background-color: #f2f2f2; }
-            </style>
-          </head>
-          <body>
-            <table>
-              <thead>
-                <tr>
-        `;
-        
-        // Tambahkan header
-        headers.forEach(header => {
-          tableHTML += `<th>${header}</th>`;
-        });
+        let tableHTML = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+          <head><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>
+            <x:Name>Tickets</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>
+          </x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+          <style>table{border-collapse:collapse;width:100%}th{background-color:#4CAF50;color:white;font-weight:bold;padding:12px;text-align:left;border:1px solid #ddd}td{padding:10px;border:1px solid #ddd;text-align:left}tr:nth-child(even){background-color:#f2f2f2}</style>
+          </head><body><table><thead><tr>`;
+        headers.forEach(h => { tableHTML += `<th>${h}</th>`; });
         tableHTML += `</tr></thead><tbody>`;
-        
-        // Tambahkan data rows yang sudah difilter
-        filteredItems.forEach((item, index) => {
+        data.forEach((item, i) => {
           tableHTML += `<tr>
-            <td>${index + 1}</td>
-            <td>${this.escapeHTML(item.userName || "-")}</td>
-            <td>${this.escapeHTML(item.picName || "-")}</td>
-            <td>${this.escapeHTML(item.number || "-")}</td>
-            <td>${this.formatDate(item.createdAt)}</td>
-            <td>${this.escapeHTML(item.title || "-")}</td>
-            <td>${this.escapeHTML(item.catalogName || "-")}</td>
-            <td>${this.escapeHTML(item.officeName || "-")}</td>
-            <td>${this.escapeHTML(item.statusName || "-")}</td>
-          </tr>`;
+            <td>${i + 1}</td><td>${this.escapeHTML(item.userName || "-")}</td>
+            <td>${this.escapeHTML(item.picName || "-")}</td><td>${this.escapeHTML(item.number || "-")}</td>
+            <td>${this.formatDate(item.createdAt)}</td><td>${this.escapeHTML(item.title || "-")}</td>
+            <td>${this.escapeHTML(item.catalogName || "-")}</td><td>${this.escapeHTML(item.officeName || "-")}</td>
+            <td>${this.escapeHTML(item.statusName || "-")}</td></tr>`;
         });
-        
         tableHTML += `</tbody></table></body></html>`;
-        
+
         const blob = new Blob([tableHTML], { type: "application/vnd.ms-excel" });
-        const url = window.URL.createObjectURL(blob);
+        const url  = window.URL.createObjectURL(blob);
         const link = document.createElement("a");
-        const fileName = `Helpdesk_Tickets_${this.currentPeriodText.replace(/ /g, '_')}_${moment().format('YYYYMMDD_HHmmss')}.xls`;
-        
-        link.href = url;
-        link.download = fileName;
+        link.href  = url;
+        link.download = `Helpdesk_Tickets_${this.currentPeriodText.replace(/ /g, '_')}_${moment().format('YYYYMMDD_HHmmss')}.xls`;
         link.style.display = "none";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
-        
-        this.showSnackbar(`Exported ${filteredItems.length} tickets for ${this.currentPeriodText}`, "success");
-      } catch (error) {
-        console.error("Export error:", error);
+        this.showSnackbar(`Exported ${data.length} tickets for ${this.currentPeriodText}`, "success");
+      } catch (e) {
+        console.error("Export error:", e);
         this.showSnackbar("Export error. Please try again.", "error");
       } finally {
         this.exporting = false;
       }
     },
-    escapeHTML(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    },
-    escapeHTML(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    },
-    formatDate(date) {
-      return moment(date).format("DD MMM YYYY");
-    },
+
+    //  Helpers 
+    escapeHTML(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; },
+    formatDate(date) { return moment(date).format("DD MMM YYYY"); },
     calculatePercentage(value) {
-      if (this.allTickets === 0) return 0;
+      if (!this.allTickets) return 0;
       return ((value / this.allTickets) * 100).toFixed(1);
     },
     getStatusColor(statusId) {
-      const colorMap = {
-        "SUBMITTED": "#0172b9", "INPROGRESS": "#0172b9", "PENDING": "#ff7a00",
-        "ASSIGNED": "#a11497", "LATE": "#ec323f", "RESOLVED": "#adc43b",
-      };
-      return colorMap[statusId] || "#9a9a9a";
+      return { SUBMITTED: "#0172b9", INPROGRESS: "#0172b9", PENDING: "#ff7a00", ASSIGNED: "#a11497", LATE: "#ec323f", RESOLVED: "#adc43b" }[statusId] || "#9a9a9a";
     },
-    getStatusIcon(statusId) {
-      if (statusId === "RESOLVED") return this.icons.mdiCheckAll;
-      return this.icons.mdiCheck;
-    },
-    showSnackbar(message, color = "success") {
-      this.snackbar.message = message;
-      this.snackbar.color = color;
-      this.snackbar.show = true;
-    },
-    toggleView() {
-      this.isChart = !this.isChart;
-      if (!this.isChart && this.items.length === 0) {
-        this.currentFilter = 'all';
-        this.statusFilter = null;
-        this.loadTableData();
-      }
-    },
-    goBack() {
-      this.isChart = true;
-      this.titleHeader = "";
-      this.currentFilter = null;
-      this.statusFilter = null;
-    },
+    getStatusIcon(statusId) { return statusId === "RESOLVED" ? this.icons.mdiCheckAll : this.icons.mdiCheck; },
+    showSnackbar(message, color = "success") { this.snackbar = { show: true, message, color }; },
     getBaseChartOptions(xLabel, yLabel) {
       return {
         chart: { toolbar: { show: false }, type: "bar" },
-        plotOptions: {
-          bar: {
-            distributed: true, horizontal: false, borderRadius: 6,
-            dataLabels: { position: "top" },
-          },
-        },
-        colors: ["#33b2df", "#546E7A", "#d4526e", "#13d8aa", "#A5978B", "#2b908f", "#f9a3a4", "#90ee7e", "#f48024", "#69d2e7"],
-        dataLabels: {
-          enabled: true, offsetY: -20,
-          style: { fontSize: "11px", colors: ["#304758"] },
-        },
-        xaxis: {
-          categories: [], title: { text: xLabel },
-          labels: { style: { fontSize: "11px" } }
-        },
-        yaxis: {
-          title: { text: yLabel },
-          labels: {
-            formatter: (val) => Number.isInteger(val) ? val.toFixed(0) : "",
-            style: { fontSize: "11px" }
-          },
-        },
+        plotOptions: { bar: { distributed: true, horizontal: false, borderRadius: 6, dataLabels: { position: "top" } } },
+        colors: ["#33b2df","#546E7A","#d4526e","#13d8aa","#A5978B","#2b908f","#f9a3a4","#90ee7e","#f48024","#69d2e7"],
+        dataLabels: { enabled: true, offsetY: -20, style: { fontSize: "11px", colors: ["#304758"] } },
+        xaxis: { categories: [], title: { text: xLabel }, labels: { style: { fontSize: "11px" } } },
+        yaxis: { title: { text: yLabel }, labels: { formatter: v => Number.isInteger(v) ? v.toFixed(0) : "", style: { fontSize: "11px" } } },
         legend: { show: false },
-        tooltip: { y: { formatter: (val) => `${val} tickets` } },
+        tooltip: { y: { formatter: v => `${v} tickets` } },
       };
     },
     getSLAChartOptions() {
       return {
         chart: { stacked: false, toolbar: { show: false } },
         colors: ["#33b2df", "#f9a3a4"],
-        dataLabels: {
-          enabled: true, enabledOnSeries: [0],
-          style: { fontSize: "10px" }
-        },
+        dataLabels: { enabled: true, enabledOnSeries: [0], style: { fontSize: "10px" } },
         stroke: { width: [0, 3], curve: "smooth" },
-        plotOptions: {
-          bar: { columnWidth: "50%", borderRadius: 5 },
-        },
-        xaxis: {
-          categories: [],
-          labels: { style: { fontSize: "11px" } }
-        },
-        yaxis: {
-          title: { text: "Hours" },
-          labels: {
-            formatter: (val) => Number.isInteger(val) ? val.toFixed(0) : "",
-            style: { fontSize: "11px" }
-          },
-        },
-        tooltip: {
-          shared: true, intersect: false,
-          y: { formatter: (val) => `${val} hours` },
-        },
-        legend: {
-          position: "top", horizontalAlign: "left",
-          fontSize: "11px"
-        },
+        plotOptions: { bar: { columnWidth: "50%", borderRadius: 5 } },
+        xaxis: { categories: [], labels: { style: { fontSize: "11px" } } },
+        yaxis: { title: { text: "Hours" }, labels: { formatter: v => Number.isInteger(v) ? v.toFixed(0) : "", style: { fontSize: "11px" } } },
+        tooltip: { shared: true, intersect: false, y: { formatter: v => `${v} hours` } },
+        legend: { position: "top", horizontalAlign: "left", fontSize: "11px" },
       };
     },
   },
@@ -892,64 +761,18 @@ export default {
 </script>
 
 <style scoped>
-.resume-container {
-  width: 100%;
-}
-
-.detail-info {
-  text-align: center;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  border-radius: 8px;
-}
-
-.detail-info:hover {
-  transform: translateY(-2px);
-}
-
-.stat-title {
-  font-size: 11px;
-  font-weight: 500;
-}
-
-.stat-value {
-  font-size: 24px;
-}
-
-.all-ticket {
-  background: linear-gradient(135deg, #9a9a9a, #e0c7c7);
-}
-
-.assigned-ticket {
-  background: linear-gradient(135deg,  #a11497, #c554bb);
-}
-
-.progress-ticket {
-  background: linear-gradient(135deg, #0172b9, #69b1df);
-}
-
-.pending-ticket {
-  background: linear-gradient(135deg, #ff7a00, #e6be00);
-}
-
-.late-ticket {
-  background: linear-gradient(135deg, #ec323f, #d87479);
-}
-
-.solved-ticket {
-  background: linear-gradient(135deg, #adc43b, #c2dc57);
-}
-
-.table-wrapper {
-  overflow-x: auto;
-  width: 100%;
-}
-
-.row-pointer >>> tbody tr {
-  cursor: pointer;
-}
-
-.row-pointer >>> tbody tr:hover {
-  background-color: #f5f5f5;
-}
+.resume-container { width: 100%; }
+.detail-info { text-align: center; transition: all 0.3s ease; cursor: pointer; border-radius: 8px; }
+.detail-info:hover { transform: translateY(-2px); }
+.stat-title  { font-size: 11px; font-weight: 500; }
+.stat-value  { font-size: 24px; }
+.all-ticket      { background: linear-gradient(135deg, #9a9a9a, #e0c7c7); }
+.assigned-ticket { background: linear-gradient(135deg, #a11497, #c554bb); }
+.progress-ticket { background: linear-gradient(135deg, #0172b9, #69b1df); }
+.pending-ticket  { background: linear-gradient(135deg, #ff7a00, #e6be00); }
+.late-ticket     { background: linear-gradient(135deg, #ec323f, #d87479); }
+.solved-ticket   { background: linear-gradient(135deg, #adc43b, #c2dc57); }
+.table-wrapper   { overflow-x: auto; width: 100%; }
+.row-pointer >>> tbody tr { cursor: pointer; }
+.row-pointer >>> tbody tr:hover { background-color: #f5f5f5; }
 </style>

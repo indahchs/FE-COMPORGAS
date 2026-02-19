@@ -509,7 +509,7 @@ export default {
 .card-content-fixed { min-height: 140px; max-height: 140px; }
 .folder-name {
   overflow: hidden; text-overflow: ellipsis;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical;
 }
 .folder-meta { display: flex; align-items: center; }
 .meta-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
