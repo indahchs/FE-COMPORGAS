@@ -1,82 +1,52 @@
 <template>
   <div>
     <v-row>
-      <v-col style="background-color: #f4f5fa" cols="12" sm="6" md="4" lg="3">
-        <v-list v-if="catalogLoaded" style="background-color: #f4f5fa">
-          <v-list-item-group v-model="item" color="primary">
+      <v-col cols="12" sm="6" md="4" lg="3">
+        <div v-if="catalogLoaded" class="faq-box">
+          <v-list-item-group v-model="selectedIdx" color="primary" mandatory>
             <v-list-item
-              style="border-bottom: 1px solid #dfdfdf"
-              @click="detailPage(item.id)"
-              v-for="(item, index) in catalog"
-              :key="index"
+              v-for="(cat, index) in pagedCatalog"
+              :key="cat.id"
+              class="catalog-item"
+              @click="detailPage(cat.id)"
             >
-              <!-- Text Content -->
-              <v-list-item-content>
-                <v-list-item-title
-                  >{{ index + 1 }}.&nbsp;&nbsp;&nbsp;{{ item.name }}
-                </v-list-item-title>
-              </v-list-item-content>
-              <v-icon>{{ icons.mdiChevronRight }}</v-icon>
+              <v-list-item-content><v-list-item-title>{{ cat.name }}</v-list-item-title></v-list-item-content>
+              <v-icon small>{{ icons.mdiChevronRight }}</v-icon>
             </v-list-item>
           </v-list-item-group>
-        </v-list>
-        <div v-else>
-          <v-skeleton-loader
-            v-for="index in 10"
-            :key="index"
-            style="width: 100%"
-            type="list-item"
-          ></v-skeleton-loader>
+          <div v-if="totalPageCatalog > 1" class="pagination-wrap">
+            <v-pagination v-model="pageCatalog" :length="totalPageCatalog" :total-visible="5" dense></v-pagination>
+          </div>
         </div>
+        <v-skeleton-loader v-else v-for="i in 5" :key="i" type="list-item"></v-skeleton-loader>
       </v-col>
-      <v-col cols="12" sm="6" md="4" lg="9" style="background-color: #f4f5fa">
-        <v-expansion-panels v-if="externalLoaded">
-          <v-expansion-panel
-            v-for="(item, index) in faqExternalByCatalog"
-            :key="index"
-          >
-            <v-expansion-panel-header>
-              <!-- {{ index + 1 }}. -->
-              &nbsp;&nbsp;&nbsp;
-              <!-- {{
-            item.question
-          }} -->
-              <div v-html="item.question"></div>
-            </v-expansion-panel-header>
-            <v-divider></v-divider>
-            <v-expansion-panel-content>
-              <div class="py-4">
-                <div v-html="item.answer"></div>
-                <!-- {{ item.answer }} -->
-              </div>
-              <div>
-                <v-row>
-                  <v-col align="center" justify="center">
-                    <v-btn
-                      v-if="item.document != null"
-                      class="btn-submit"
-                      @click="download(item)"
-                    >
-                      Download File
-                    </v-btn>
-                  </v-col>
-                </v-row>
-              </div>
-            </v-expansion-panel-content>
-          </v-expansion-panel>
-        </v-expansion-panels>
-        <div v-else>
-          <v-skeleton-loader
-            v-for="index in 10"
-            :key="index"
-            style="width: 100%"
-            type="list-item"
-          ></v-skeleton-loader>
+
+      <v-col cols="12" sm="6" md="4" lg="9">
+        <div v-if="externalLoaded" class="faq-box">
+          <v-expansion-panels accordion flat>
+            <v-expansion-panel v-for="(item, i) in pagedFaq" :key="item.id || i">
+              <v-expansion-panel-header v-if="item.question">
+                  <div v-html="item.question"></div>
+                </v-expansion-panel-header>
+                <v-divider></v-divider>
+                <v-expansion-panel-content>
+                  <div class="py-6 px-2"><div v-html="item.answer"></div></div>
+                  <v-row v-if="item.document != null"><v-col align="center">
+                    <v-btn class="btn-submit" @click="download(item)">Download File</v-btn>
+                  </v-col></v-row>
+                </v-expansion-panel-content>
+            </v-expansion-panel>
+          </v-expansion-panels>
+          <div v-if="totalPageFaq > 1" class="pagination-wrap">
+            <v-pagination v-model="pageFaq" :length="totalPageFaq" :total-visible="5" dense></v-pagination>
+          </div>
         </div>
+        <v-skeleton-loader v-else v-for="i in 5" :key="i" type="list-item"></v-skeleton-loader>
       </v-col>
     </v-row>
   </div>
 </template>
+
 <script>
 import { mdiChevronRight } from "@mdi/js";
 import FaqService from "../../../services/faq/faqServices";
@@ -89,72 +59,78 @@ export default {
   data() {
     return {
       baseUrl: process.env.VUE_APP_PERTAGAS,
-      isIT: false,
-      myloadingvariable: true,
-      openModal: false,
-      icons: {
-        mdiChevronRight,
-      },
-      catalog: [],
-      faqExternal: [],
-      faqExternalByCatalog: [],
-      item: 0,
-      itemSelected: null,
-      catalogLoaded: false,
-      externalLoaded: false,
+      icons: { mdiChevronRight },
+      catalog: [], catalogFiltered: [], faqExternal: [], faqByCatalog: [],
+      selectedIdx: 0,
+      catalogLoaded: false, externalLoaded: false,
+      pageSize: 5,
+      pageCatalog: 1, pageFaq: 1,
     };
   },
-  created() {
-    this.getCatalog();
+  computed: {
+    pagedCatalog() { const s = (this.pageCatalog-1)*this.pageSize; return this.catalogFiltered.slice(s, s+this.pageSize); },
+    totalPageCatalog() { return Math.ceil(this.catalogFiltered.length/this.pageSize); },
+    pagedFaq() { const s = (this.pageFaq-1)*this.pageSize; return this.faqByCatalog.slice(s, s+this.pageSize); },
+    totalPageFaq() { return Math.ceil(this.faqByCatalog.length/this.pageSize); },
   },
+  created() { this.getCatalog(); },
   methods: {
     async getCatalog() {
       this.catalogLoaded = false;
-      const res = await catalogService.getAll();
-      const data = res.data.data.content;
-      this.catalog = data;
-      this.detailPage(this.catalog[0].id);
-      if (this.catalog) {
-        this.catalogLoaded = true;
-        this.getExternalFaq();
-      }
+      const res = await catalogService.getAllOptions();
+      const catData = res.data.data;
+      this.catalog = Array.isArray(catData)
+        ? (catData[0]?.value ? catData.map(c => ({ id: c.value, name: c.label })) : catData)
+        : (catData.content || []);
+      this.catalogLoaded = true;
+      this.getExternalFaq();
     },
     async getExternalFaq() {
       this.externalLoaded = false;
       const res = await faqService.getExternal();
-      const data = res.data.data;
-      this.faqExternal = data;
-      if (this.faqExternal) {
-        this.externalLoaded = true;
-        this.detailPage(this.catalog[0].id);
-      }
+      this.faqExternal = res.data.data || [];
+      const ids = new Set(this.faqExternal.map(f => String(f.catalogId)));
+      this.catalogFiltered = this.catalog.filter(c => ids.has(String(c.id)));
+      this.externalLoaded = true;
+      if (this.catalogFiltered.length > 0) this.detailPage(this.catalogFiltered[0].id);
     },
-
-    detailPage(x) {
-      this.faqExternalByCatalog = this.faqExternal.filter((a) => {
-        return a.catalogId === x;
-      });
+    detailPage(id) {
+      this.pageFaq = 1;
+      this.selectedIdx = this.pagedCatalog.findIndex(c => String(c.id) === String(id));
+      this.faqByCatalog = this.faqExternal.filter(f => String(f.catalogId) === String(id));
     },
-
     download(faq) {
-      var docUrl = document.createElement("a");
-      docUrl.href = this.baseUrl + faq.fileUrl;
-
-      docUrl.setAttribute("open", faq.document.file_name);
-      docUrl.setAttribute("target", "_blank");
-      docUrl.download = true;
-
-      document.body.appendChild(docUrl);
-      docUrl.click();
-
-      window.URL.revokeObjectURL(docUrl);
+      const a = document.createElement("a");
+      a.href = this.baseUrl + faq.fileUrl;
+      a.setAttribute("target", "_blank");
+      a.download = faq.document.file_name;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(a);
     },
   },
 };
 </script>
+
 <style scoped>
-.btn-submit {
-  color: white !important;
-  background-color: #0172b9 !important;
+.btn-submit { color: white !important; background-color: #0172b9 !important; }
+
+.faq-box {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.catalog-item {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 8px 16px;
+}
+
+.pagination-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+  border-top: 1px solid #e0e0e0;
 }
 </style>
