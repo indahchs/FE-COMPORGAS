@@ -1,46 +1,9 @@
 <template>
   <div>
     <v-card v-if="isList">
-      <v-card-title style="justify-content: right">
-        <v-row
-          ><v-col cols="10"> </v-col>
-          <v-col cols="2">
-            <v-btn class="btn-submit" @click="createCatalog"
-              >CREATE CATALOG</v-btn
-            >
-          </v-col>
-        </v-row>
-      </v-card-title>
-      <!-- <v-row>
-        <v-col
-          @click="openForm(null)"
-          class="text-center"
-          cols="12"
-          sm="6"
-          md="4"
-          lg="3"
-          v-for="(item, id) in dataCatalog"
-          :key="id"
-        >
-          <img :src="item.img" />
-          <v-card-text class="text-center">
-            <div>{{ item.title }}</div>
-          </v-card-text></v-col
-        >
-      </v-row> -->
-      <v-card-text>
-        <v-row>
-          <!--<v-col cols="12" sm="6" md="4" lg="8">
-            <v-select
-              dense
-              clearable
-              v-model="officeData"
-              outlined
-              label="Office Location"
-              :items="locationOptions"
-            ></v-select>
-          </v-col>-->
-          <v-col cols="12" sm="6" md="4" lg="4">
+      <v-card-title>
+        <v-row align="center">
+          <v-col cols="12" sm="10" md="10" lg="10">
             <v-text-field
               dense
               clearable
@@ -48,10 +11,14 @@
               outlined
               :append-icon="icons.mdiMagnify"
               label="Catalog"
+              hide-details
             ></v-text-field>
           </v-col>
+          <v-col cols="12" sm="2" md="2" lg="2">
+            <v-btn class="btn-submit" @click="createCatalog">CREATE</v-btn>
+          </v-col>
         </v-row>
-      </v-card-text>
+      </v-card-title>
       <v-card-text>
         <v-data-table
           hide-default-footer

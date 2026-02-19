@@ -69,7 +69,6 @@ const getHelpDesk = ItHelpDeskService.build();
 export default {
   data() {
     return {
-      isEdit: false,
       status: false,
       loading: false,
       slaHari: "",

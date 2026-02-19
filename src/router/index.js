@@ -289,24 +289,17 @@ const router = new VueRouter({
   routes,
 });
 
+//Navigation Guard
 router.beforeEach((to, from, next) => {
-  const reqLogout = to.matched.some((record) => record.meta.reqLogout);
-  const reqAuth = to.matched.some((record) => record.meta.reqAuth);
-  const reqToken = !!StorageConfig.getToken();
+  const reqAuth = to.matched.some(r => r.meta.reqAuth);
+  const reqLogout = to.matched.some(r => r.meta.reqLogout);
+  const isLoggedIn = !!StorageConfig.getToken();
 
-  if (reqAuth === true) {
-    if (reqToken === false) {
-      next("/login");
-    } else {
-      next();
-    }
-  } else {
-    if (reqToken === true && reqLogout === true) {
-      next("/home");
-    } else {
-      next();
-    }
-  }
+  if (reqAuth && !isLoggedIn) return next("/login");
+
+  if (reqLogout && isLoggedIn) return next("/home");
+
+  next();
 });
 
 export default router;

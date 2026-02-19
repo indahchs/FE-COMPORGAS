@@ -223,15 +223,13 @@ export default {
     isOpen: {
       get() {
         const data = this.datas;
-        this.isTicket = JSON.stringify(data) !== "{}" ? true : false;
-        if (JSON.stringify(data) !== "{}") {
+        this.isTicket = data && JSON.stringify(data) !== "{}" ? true : false;
+        if (data && JSON.stringify(data) !== "{}") {
           this.service = data.id;
           this.isNotes = true;
           this.onChangeCatalog();
         }
-
         this.isPict = false;
-
         return this.open;
       },
       set(value) {

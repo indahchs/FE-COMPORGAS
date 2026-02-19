@@ -5,14 +5,7 @@
         <v-card-title>
           <v-row align="center">
             <v-col>
-              <div
-                style="
-                  font-size: 18px;
-                  line-height: 28px;
-                  font-weight: 600;
-                  color: #000000;
-                "
-              >
+              <div style="font-size: 18px; line-height: 28px; font-weight: 600; color: #000000;">
                 {{ title }}
               </div>
             </v-col>
@@ -38,46 +31,30 @@
                 placeholder="Catalog"
               ></v-select>
             </v-col>
-            <v-col cols="6">
-
-            </v-col>
+            <v-col cols="6"></v-col>
             <v-col cols="6">
               <label class="required">Question</label>
-              <!-- <v-textarea
-                v-model.trim="$v.question.$model"
-                :error-messages="getErrors('question', $v.question)"
-                @blur="$v.question.$touch()"
-                outlined
-              ></v-textarea> -->
               <quill-editor
                 v-model.trim="$v.question.$model"
                 :error-messages="getErrors('question', $v.question)"
                 @blur="$v.question.$touch()"
-                ref="myQuillEditor"
+                ref="questionEditor"
                 :options="editorOption"
                 @focus="onEditorFocus($event)"
                 @ready="onEditorReady($event)"
-              >
-              </quill-editor>
+              ></quill-editor>
             </v-col>
             <v-col cols="6">
               <label class="required">Answer</label>
-              <!-- <v-textarea
-                v-model.trim="$v.answer.$model"
-                :error-messages="getErrors('answer', $v.answer)"
-                @blur="$v.answer.$touch()"
-                outlined
-              ></v-textarea> -->
               <quill-editor
                 v-model.trim="$v.answer.$model"
                 :error-messages="getErrors('answer', $v.answer)"
                 @blur="$v.answer.$touch()"
-                ref="myQuillEditor"
+                ref="answerEditor"
                 :options="editorOption"
                 @focus="onEditorFocus($event)"
                 @ready="onEditorReady($event)"
-              >
-              </quill-editor>
+              ></quill-editor>
             </v-col>
             <v-col cols="6">
               <label>Upload Attachment</label>
@@ -88,44 +65,28 @@
                   cols="12"
                   @click="onButtonClick"
                 >
-                  <v-icon size="50"> {{ icons.mdiFileDocumentOutline }} </v-icon
-                  ><br />
+                  <v-icon size="50">{{ icons.mdiFileDocumentOutline }}</v-icon><br />
                   <span class="font-subt">Add File</span><br />
                   <span class="font-subt">Max 1 file and max size 5 MB</span>
                 </v-col>
-                <v-col
-                  v-else
-                  class="mb-12"
-                  style="text-align: center"
-                  cols="12"
-                >
-                  <button style="float: right" id="x" @click="deleteImage()">
-                    X
-                  </button>
-                  <v-icon size="50">
-                    {{ icons.mdiFileDocumentOutline }}
-                  </v-icon>
+                <v-col v-else class="mb-12" style="text-align: center" cols="12">
+                  <button style="float: right" id="x" @click="deleteImage()">X</button>
+                  <v-icon size="50">{{ icons.mdiFileDocumentOutline }}</v-icon>
                   <br /><span class="limit-text">{{ inputText }}</span>
                 </v-col>
-                <input
-                  ref="uploader"
-                  class="d-none"
-                  type="file"
-                  accept="image/*, .pdf, .xls, .xlsx"
-                  @change="onFileChanged"
-                />
+                <input ref="uploader" class="d-none" type="file"
+                  accept="image/*, .pdf, .xls, .xlsx" @change="onFileChanged" />
               </v-row>
             </v-col>
           </v-row>
           <br />
-          <v-btn class="btn-submit" @click="submit" :loading="loading">
-            Submit
-          </v-btn>
+          <v-btn class="btn-submit" @click="submit" :loading="loading">Submit</v-btn>
         </v-card-text>
       </v-card>
     </v-dialog>
   </v-row>
 </template>
+
 <script>
 import { required } from "vuelidate/lib/validators";
 import { mdiClose, mdiFileDocumentOutline } from "@mdi/js";
@@ -141,7 +102,6 @@ export default {
   data() {
     return {
       title: "Create FAQ",
-      submitLabel: "Submit",
       dataCatalog: [],
       loading: false,
       id: "",
@@ -152,22 +112,14 @@ export default {
       selectedFile1: null,
       inputText: "",
       isDeleted: false,
-      icons: {
-        mdiFileDocumentOutline,
-        mdiClose,
-      },
+      icons: { mdiFileDocumentOutline, mdiClose },
+      editorOption: { placeholder: "" },
     };
   },
   validations: {
-    catalogId: {
-      required,
-    },
-    question: {
-      required,
-    },
-    answer: {
-      required,
-    },
+    catalogId: { required },
+    question: { required },
+    answer: { required },
   },
   props: {
     open: Boolean,
@@ -185,7 +137,6 @@ export default {
       },
       set(value) {
         if (!value) {
-          this.item = null;
           this.clearForm();
           this.$emit("close");
         }
@@ -197,202 +148,74 @@ export default {
       const errors = [];
       if (!model.$dirty) return errors;
       switch (name) {
-        case "catalogId":
-          !model.required && errors.push("Catalog is required.");
-          break;
-        case "question":
-          this.isYear = !!model.$error;
-          !model.required && errors.push("Question is required");
-          break;
-        case "answer":
-          this.isStart = !!model.$error;
-          !model.required && errors.push("Answer is required");
-          break;
-        default:
-          break;
+        case "catalogId": !model.required && errors.push("Catalog is required."); break;
+        case "question":  !model.required && errors.push("Question is required"); break;
+        case "answer":    !model.required && errors.push("Answer is required"); break;
       }
-
       return errors;
     },
     edit() {
       if (this.item != null) {
         this.title = "Edit FAQ";
-        this.submitLabel = "Edit FAQ";
         this.id = this.item.id;
         this.question = this.item.question;
         this.answer = this.item.answer;
-        this.selectedFile1 =
-          this.item.fileUrl !== null ? this.item.fileUrl : null;
-        this.imgUpload = this.item.fileUrl !== null ? this.item.fileUrl : null;
-        this.inputText =
-          this.item.document !== null ? this.item.document.fileName : null;
-        if (this.item.catalogId !== null) {
-          this.catalogId = this.item.catalogId;
-        }
-        this.domain = this.item.domain;
+        this.selectedFile1 = this.item.fileUrl || null;
+        this.imgUpload = this.item.fileUrl || null;
+        this.inputText = this.item.document ? this.item.document.fileName : "";
+        this.catalogId = this.item.catalogId || null;
       } else {
-        this.clearForm();
         this.title = "Create FAQ";
-        this.submitLabel = "Create FAQ";
+        this.clearForm();
       }
     },
     async getCatalog() {
       const res = await catalogService.getAllOptions();
-      const data = res.data.data;
-      this.dataCatalog = data;
+      this.dataCatalog = res.data.data;
     },
     async submit() {
       this.$v.$touch();
-      if (
-        !this.$v.question.$invalid &&
-        !this.$v.answer.$invalid &&
-        !this.$v.catalogId.$invalid
-      ) {
-        this.loading = true;
-        const param = {
-          id: this.id,
-          catalogId: this.catalogId,
-          question: this.question,
-          answer: this.answer,
-          domain: this.domain,
-          position: 1,
-        };
+      if (this.$v.$invalid) return;
 
-        const res =
-          this.item == null
-            ? await faqService.add(param)
-            : await faqService.update(param);
+      this.loading = true;
+      const param = {
+        id: this.id,
+        catalogId: this.catalogId,
+        question: this.question,
+        answer: this.answer,
+        domain: this.domain,
+        position: 1,
+      };
 
-        const resData = res.data;
+      const res = this.item == null
+        ? await faqService.add(param)
+        : await faqService.update(param);
 
-        if (resData.status === 200) {
-          if (this.selectedFile1) {
-            this.uploadFile(resData.data.id);
-          } else {
-            if (this.isDeleted) {
-              this.uploadFile(resData.data.id);
-            } else {
-              Swal.fire({
-                icon: "success",
-                title: "Success",
-                text: resData.message,
-                showCancelButton: false,
-                showConfirmButton: true,
-                allowEscapeKey: false,
-                allowOutsideClick: false,
-              }).then(async (result) => {
-                if (result) {
-                  this.loading = false;
-                  this.item = null;
-                  this.$emit("close");
-                }
-              });
-            }
-          }
-        } else {
-          Swal.fire({
-            icon: "error",
-            title: "Failed",
-            text: resData.message,
-            showCancelButton: false,
-            showConfirmButton: true,
-            allowEscapeKey: false,
-            allowOutsideClick: false,
-          }).then((result) => {
-            if (result) {
-              this.loading = false;
-            }
-          });
+      const resData = res.data;
+      if (resData.status === 200) {
+        const savedId = resData.data.id;
+        if (this.selectedFile1 instanceof File) {
+          await this.uploadFile(savedId);
+        } else if (this.isDeleted) {
+          await hitAPI.delete(`faq/document/${savedId}`);
         }
+        this.loading = false;
+        Swal.fire({
+          icon: "success", title: "Success", text: resData.message,
+          showConfirmButton: true, allowEscapeKey: false, allowOutsideClick: false,
+        }).then(() => {
+          this.$emit("close"); // parent closeModal akan reload data
+        });
+      } else {
+        this.loading = false;
+        Swal.fire({ icon: "error", title: "Failed", text: resData.message, showConfirmButton: true });
       }
     },
-
-    async uploadFile(id, x) {
+    async uploadFile(id) {
       const par = new FormData();
       par.append("file", this.selectedFile1);
-      const api = "faq/document/";
-      if (this.item != null) {
-        if (!this.isDeleted) {
-          hitAPI.post(`${api}${id}`, par).then((res) => {
-            if (res.data.status === 200) {
-              Swal.fire({
-                icon: "success",
-                title: "Success",
-                text: res.data.message,
-                buttons: {
-                  cancel: false,
-                  confirm: true,
-                  confirmButtonText: "Yes",
-                  cancelButtonText: "No",
-                },
-                closeOnEsc: false,
-                closeOnClickOutside: false,
-              }).then((result) => {
-                if (result) {
-                  this.loading = false;
-                  this.close();
-                }
-              });
-            } else {
-              this.loading = false;
-              this.errorPopup(res.data.message);
-            }
-          });
-        } else {
-          hitAPI.delete(`${api}${id}`, par).then((res) => {
-            if (res.data.status === 200) {
-              Swal.fire({
-                icon: "success",
-                title: "Success",
-                text: res.data.message,
-                buttons: {
-                  cancel: false,
-                  confirm: true,
-                  confirmButtonText: "Yes",
-                  cancelButtonText: "No",
-                },
-                closeOnEsc: false,
-                closeOnClickOutside: false,
-              }).then((result) => {
-                if (result) {
-                  this.loading = false;
-                  this.close();
-                }
-              });
-            } else {
-              this.loading = false;
-              this.errorPopup(res.data.message);
-            }
-          });
-        }
-      } else {
-        hitAPI.post(`${api}${id}`, par).then((res) => {
-          if (res.data.status === 200) {
-            Swal.fire({
-              icon: "success",
-              title: "Success",
-              text: res.data.message,
-              buttons: {
-                cancel: false,
-                confirm: true,
-                confirmButtonText: "Yes",
-                cancelButtonText: "No",
-              },
-              closeOnEsc: false,
-              closeOnClickOutside: false,
-            }).then((result) => {
-              if (result) {
-                this.loading = false;
-                this.close();
-              }
-            });
-          } else {
-            this.loading = false;
-            this.errorPopup(res.data.message);
-          }
-        });
-      }
-      this.loading = false;
+      const api = this.item != null && !this.isDeleted ? "post" : "post";
+      return hitAPI.post(`faq/document/${id}`, par);
     },
     deleteImage() {
       this.$refs.uploader.value = "";
@@ -400,86 +223,57 @@ export default {
       this.inputText = "";
       this.imgUpload = null;
       this.selectedFile1 = null;
-      this.isSelecting = false;
-    },
-    successPopup(val) {
-      Swal.fire({
-        title: "Success",
-        text: val,
-        icon: "success",
-        button: false,
-        timer: 2000,
-      });
-    },
-    errorPopup(val) {
-      Swal.fire({
-        title: "Failed",
-        text: val,
-        icon: "error",
-        button: false,
-        timer: 2000,
-      });
     },
     onFileChanged(e) {
       this.isDeleted = false;
-      this.selectedFile = e.target.files[0];
-      this.inputText = e.target.files[0].name;
-      if (e.target.files[0].size > 5000000) {
-        this.errorPopup("File upload exceeds the 5MB limit!");
-      } else if (
-        e.target.files[0].type === "image/png" ||
-        e.target.files[0].type === "image/jpeg" ||
-        e.target.files[0].type === "image/jpg" ||
-        e.target.files[0].type === "application/pdf" ||
-        e.target.files[0].type === "application/vnd.ms-excel" ||
-        e.target.files[0].type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-      ) {
-        this.imgUpload = URL.createObjectURL(e.target.files[0]);
-        this.selectedFile1 = e.target.files[0];
-        this.inputText = e.target.files[0].name;
+      const file = e.target.files[0];
+      if (!file) return;
+      this.inputText = file.name;
+      if (file.size > 5000000) return this.errorPopup("File upload exceeds the 5MB limit!");
+      const allowed = ["image/png","image/jpeg","image/jpg","application/pdf",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"];
+      if (allowed.includes(file.type)) {
+        this.imgUpload = URL.createObjectURL(file);
+        this.selectedFile1 = file;
       } else {
         this.errorPopup("Unsupported File Type");
       }
-
-      // do something
     },
-    onButtonClick(x) {
-      this.idBtn = x;
-      this.isSelecting = true;
-      window.addEventListener(
-        "focus",
-        () => {
-          this.isSelecting = false;
-        },
-        { once: true }
-      );
+    onButtonClick() {
+      window.addEventListener("focus", () => {}, { once: true });
       this.$refs.uploader.click();
+    },
+    onEditorFocus() {},
+    onEditorReady() {},
+    errorPopup(val) {
+      Swal.fire({ title: "Failed", text: val, icon: "error", timer: 2000 });
     },
     close() {
       this.clearForm();
-
       this.$emit("close");
     },
     clearForm() {
+      this.id = "";
       this.catalogId = null;
       this.selectedFile1 = null;
       this.question = "";
       this.answer = "";
+      this.isDeleted = false;
+      this.inputText = "";
       this.$v.$reset();
     },
   },
 };
 </script>
-<style scope>
+
+<style scoped>
 .btn-submit {
   color: white !important;
   background-color: #0172b9 !important;
   width: 100%;
 }
-.required:after {
-  content: " *";
-  color: red;
-}
+.required:after { content: " *"; color: red; }
 #x {
   background: rgb(197, 194, 194);
   color: white;
