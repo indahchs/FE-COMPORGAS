@@ -65,7 +65,7 @@
               class="datetime-picker"
             />
           </v-col>
-          <v-col v-if="isITLead" cols="6" sm="6" md="3">
+          <v-col v-if="canDownload" cols="6" sm="6" md="3">
             <v-btn
               class="btn-blue"
               :loading="exportLoading"
@@ -172,6 +172,7 @@ export default {
       pendingTickets: 0, lateTickets: 0, solvedTickets: 0,
       showModal: false, modalData: {},
       isITLead: false,
+      canDownload: false,
       headers: [
         { text: "Name",     value: "userName" },
         { text: "PIC",      value: "picName" },
@@ -221,6 +222,7 @@ export default {
     checkUserRole() {
       const user = JSON.parse(localStorage.getItem("dataUser"));
       this.isITLead = user?.roleId === "IT_LEAD" || user?.roleId === "SUPER";
+      this.canDownload = user?.roleId === "IT_LEAD" || user?.roleId === "SUPER" || user?.roleId === "IT";
     },
 
     async loadCatalogs() {
