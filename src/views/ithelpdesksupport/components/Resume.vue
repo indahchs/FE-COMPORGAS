@@ -325,7 +325,7 @@ import moment from "moment";
 import ItHelpDeskService from "@/services/ithelpdesk/itHelpDeskServices";
 import HelpdeskDashboardService from "@/services/helpdeskdashboard/helpdeskDashboardServices";
 
-const getTicket = ItHelpDeskService.build();
+const getTicket        = ItHelpDeskService.build();
 const dashboardService = HelpdeskDashboardService.build();
 
 export default {
@@ -334,8 +334,7 @@ export default {
     return {
       isLoading: false, exporting: false, isChart: true, isPersonal: false,
       search: "", detailDialog: false, comparisonDialog: false,
-      selectedTicket: null, currentFilter: null,
-      statusFilter: null,
+      selectedTicket: null, currentFilter: null, statusFilter: null,
       snackbar: { show: false, message: "", color: "success" },
       comparisonData: { previous: [], current: [] },
       globalYear: new Date().getFullYear(),
@@ -356,6 +355,8 @@ export default {
       allTickets: 0, assignedTickets: 0, progressTickets: 0,
       pendingTickets: 0, lateTickets: 0, solvedTickets: 0,
       yearOptions: [], titleHeader: "",
+      // SLA map: { catalogName -> total SLA hours }
+      catalogSlaMap: {},
       headers: [
         { text: "Name", value: "userName" }, { text: "PIC", value: "picName" },
         { text: "Ticket No", value: "number" }, { text: "Date", value: "createdAt" },
@@ -364,10 +365,10 @@ export default {
         { text: "Actions", value: "actions", sortable: false },
       ],
       items: [],
-      seriesDaily:   [{ name: "Tickets", data: [] }],
-      seriesCategory:[{ name: "Tickets", data: [] }],
-      seriesPic:     [{ name: "Tickets", data: [] }],
-      seriesOffice:  [{ name: "Tickets", data: [] }],
+      seriesDaily:    [{ name: "Tickets", data: [] }],
+      seriesCategory: [{ name: "Tickets", data: [] }],
+      seriesPic:      [{ name: "Tickets", data: [] }],
+      seriesOffice:   [{ name: "Tickets", data: [] }],
       seriesStack: [
         { name: "Avg SLA", type: "bar",  data: [] },
         { name: "Max SLA", type: "line", data: [] },
@@ -376,6 +377,7 @@ export default {
       chartPicOptions: {}, chartOfficeOptions: {}, chartOptionsStack: {},
     };
   },
+
   computed: {
     ticketStats() {
       return [
@@ -393,9 +395,9 @@ export default {
     },
     slaPerformanceColor() {
       if (!this.seriesStack[0].data.length) return "grey";
-      const avgSLA = this.seriesStack[0].data.reduce((a, b) => a + b, 0) / this.seriesStack[0].data.length;
-      const maxSLA = Math.max(...this.seriesStack[1].data);
-      const ratio  = avgSLA / maxSLA;
+      const avg   = this.seriesStack[0].data.reduce((a, b) => a + b, 0) / this.seriesStack[0].data.length;
+      const max   = Math.max(...this.seriesStack[1].data);
+      const ratio = avg / max;
       if (ratio < 0.5)  return "success";
       if (ratio < 0.75) return "warning";
       return "error";
@@ -424,10 +426,12 @@ export default {
     },
     iconSize() { return this.$vuetify.breakpoint.xs ? 24 : 32; },
   },
+
   mounted() {
     this.initializeChartOptions();
     this.initializeDashboard();
   },
+
   methods: {
     initializeChartOptions() {
       this.chartDailyOptions    = this.getBaseChartOptions("Date", "Tickets");
@@ -436,6 +440,7 @@ export default {
       this.chartOfficeOptions   = this.getBaseChartOptions("Location", "Tickets");
       this.chartOptionsStack    = this.getSLAChartOptions();
     },
+
     async initializeDashboard() {
       this.isLoading = true;
       try {
@@ -448,7 +453,10 @@ export default {
         this.isLoading = false;
       }
     },
+
     async loadAllData() {
+      // SLA map harus load duluan sebelum getTicketLateCount
+      await this.loadSlaMap();
       await Promise.all([
         this.getAllTicketsCount(), this.getTicketAssignedCount(),
         this.getTicketInProgressCount(), this.getTicketPendingCount(),
@@ -458,6 +466,7 @@ export default {
         this.getTicketsByCategorySlaHours(),
       ]);
     },
+
     async refreshAllData() {
       this.isLoading = true;
       try {
@@ -470,6 +479,7 @@ export default {
         this.isLoading = false;
       }
     },
+
     async updateAllFilters() {
       this.isLoading = true;
       try {
@@ -480,7 +490,24 @@ export default {
       }
     },
 
-    // API Count
+    // ── SLA ─────────────────────────────────────────────────────────
+    async loadSlaMap() {
+      try {
+        const res = await getTicket.getHelpDeskPage({ size: 100, page: 0 });
+        this.catalogSlaMap = {};
+        (res.data.data.content || []).forEach(c => {
+          this.catalogSlaMap[c.name] = c.slaDays * 24 + (c.slaHours || 0);
+        });
+      } catch (e) { console.error(e); }
+    },
+
+    isLate(item) {
+      if (item.statusId === "RESOLVED") return false;
+      const slaHours = this.catalogSlaMap[item.catalogName] || 0;
+      return slaHours > 0 && moment().diff(moment(item.createdAt), "hours") > slaHours;
+    },
+
+    // ── API Count ────────────────────────────────────────────────────
     async getAllTicketsCount() {
       try { this.allTickets      = (await dashboardService.getAllTicketsCount({ year: this.globalYear, month: this.globalMonth })).data.data || 0; } catch { this.allTickets = 0; }
     },
@@ -496,11 +523,20 @@ export default {
     async getTicketResolvedCount() {
       try { this.solvedTickets   = (await dashboardService.getTicketResolvedCount({ year: this.globalYear, month: this.globalMonth })).data.data || 0; } catch { this.solvedTickets = 0; }
     },
+
+    // LATE dihitung client-side berdasarkan SLA map
     async getTicketLateCount() {
-      try { this.lateTickets     = (await dashboardService.getTicketLateCount({ year: this.globalYear, month: this.globalMonth })).data.data || 0; } catch { this.lateTickets = 0; }
+      try {
+        const res  = await getTicket.getTicketPic({ status: null, size: 1000, page: 0 });
+        const data = (res.data.data.content || []).filter(item => {
+          const d = moment(item.createdAt);
+          return d.year() === this.globalYear && (d.month() + 1) === this.globalMonth;
+        });
+        this.lateTickets = data.filter(i => this.isLate(i)).length;
+      } catch { this.lateTickets = 0; }
     },
 
-    //  API Charts 
+    // ── API Charts ───────────────────────────────────────────────────
     async getTicketsByMonth() {
       try {
         const data = (await dashboardService.getTicketCountByMonth({ year: this.globalYear, month: this.globalMonth })).data.data || [];
@@ -547,46 +583,37 @@ export default {
       catch { this.yearOptions = [new Date().getFullYear()]; }
     },
 
-    //  Table 
+    // ── Table ────────────────────────────────────────────────────────
     async viewDetails(title, filter) {
       this.currentFilter = filter;
       this.titleHeader   = title;
-
-      const statusMap = {
-        all:      null,
-        assigned: 'ASSIGNED',
-        progress: 'INPROGRESS',
-        pending:  'PENDING',
-        solved:   'RESOLVED',
-        late:     'LATE',       
-      };
-      this.statusFilter = statusMap[filter];
-      this.isChart      = false;
+      const statusMap    = { all: null, assigned: "ASSIGNED", progress: "INPROGRESS", pending: "PENDING", solved: "RESOLVED", late: "LATE" };
+      this.statusFilter  = statusMap[filter];
+      this.isChart       = false;
       await this.loadTableData();
     },
 
     async loadTableData() {
+      this.isLoading = true;
       try {
-        this.isLoading = true;
-        const param = {
-          keyword:   null,
-          location:  null,
-          startDate: null,
-          endDate:   null,
-          catalog:   null,
-          status:    this.statusFilter, // null = semua, 'LATE', 'ASSIGNED', dst
-          size:      1000,
-          page:      0,
-        };
-        const res  = await getTicket.getTicketPic(param);
+        // Kalau LATE, fetch semua tanpa filter status (nanti filter client-side)
+        const res  = await getTicket.getTicketPic({
+          keyword: null, location: null, startDate: null, endDate: null, catalog: null,
+          status:  this.statusFilter === "LATE" ? null : this.statusFilter,
+          size:    1000, page: 0,
+        });
         let data   = res.data.data.content || [];
 
-        // Filter tahun & bulan secara client-side dari createdAt
-        // karena API getTicketPic tidak support param year/month
+        // Filter tahun & bulan dari createdAt
         data = data.filter(item => {
           const d = moment(item.createdAt);
           return d.year() === this.globalYear && (d.month() + 1) === this.globalMonth;
         });
+
+        // Filter LATE client-side
+        if (this.statusFilter === "LATE") {
+          data = data.filter(i => this.isLate(i));
+        }
 
         this.items = data;
         this.showSnackbar(`Loaded ${this.items.length} tickets`, "success");
@@ -601,12 +628,13 @@ export default {
     toggleView() {
       this.isChart = !this.isChart;
       if (!this.isChart) {
-        this.currentFilter = 'all';
-        this.titleHeader   = 'All Tickets';
+        this.currentFilter = "all";
+        this.titleHeader   = "All Tickets";
         this.statusFilter  = null;
         this.loadTableData();
       }
     },
+
     goBack() {
       this.isChart       = true;
       this.titleHeader   = "";
@@ -614,14 +642,14 @@ export default {
       this.statusFilter  = null;
     },
 
-    //  Ticket Actions 
+    // ── Ticket Actions ───────────────────────────────────────────────
     openTicketDetail(item) { this.selectedTicket = item; this.detailDialog = true; },
     editTicket(ticket) {
       this.detailDialog = false;
       this.$router.push({ name: "ithelpdesksupport-my-request-detail", params: { id: ticket.id } });
     },
 
-    //  Comparison 
+    // ── Comparison ───────────────────────────────────────────────────
     async showComparison() {
       this.isLoading = true;
       try {
@@ -658,20 +686,19 @@ export default {
         this.isLoading = false;
       }
     },
+
     calculateChange(oldVal, newVal) {
       if (oldVal === 0) return newVal > 0 ? 100 : 0;
       return Math.round(((newVal - oldVal) / oldVal) * 100);
     },
 
-    //  Export 
+    // ── Export ───────────────────────────────────────────────────────
     async exportToExcel() {
       this.exporting = true;
       try {
         this.showSnackbar(`Loading data for ${this.currentPeriodText}...`, "info");
         const res  = await getTicket.getTicketPic({ keyword: null, location: null, startDate: null, endDate: null, catalog: null, status: null, size: 1000, page: 0 });
-        const all  = res.data.data.content || [];
-        // Filter berdasarkan periode
-        const data = all.filter(item => {
+        const data = (res.data.data.content || []).filter(item => {
           const d = moment(item.createdAt);
           return d.year() === this.globalYear && (d.month() + 1) === this.globalMonth;
         });
@@ -704,7 +731,7 @@ export default {
         const url  = window.URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href  = url;
-        link.download = `Helpdesk_Tickets_${this.currentPeriodText.replace(/ /g, '_')}_${moment().format('YYYYMMDD_HHmmss')}.xls`;
+        link.download = `Helpdesk_Tickets_${this.currentPeriodText.replace(/ /g, "_")}_${moment().format("YYYYMMDD_HHmmss")}.xls`;
         link.style.display = "none";
         document.body.appendChild(link);
         link.click();
@@ -719,8 +746,8 @@ export default {
       }
     },
 
-    //  Helpers 
-    escapeHTML(text) { const d = document.createElement('div'); d.textContent = text; return d.innerHTML; },
+    // ── Helpers ──────────────────────────────────────────────────────
+    escapeHTML(text) { const d = document.createElement("div"); d.textContent = text; return d.innerHTML; },
     formatDate(date) { return moment(date).format("DD MMM YYYY"); },
     calculatePercentage(value) {
       if (!this.allTickets) return 0;
@@ -731,6 +758,7 @@ export default {
     },
     getStatusIcon(statusId) { return statusId === "RESOLVED" ? this.icons.mdiCheckAll : this.icons.mdiCheck; },
     showSnackbar(message, color = "success") { this.snackbar = { show: true, message, color }; },
+
     getBaseChartOptions(xLabel, yLabel) {
       return {
         chart: { toolbar: { show: false }, type: "bar" },

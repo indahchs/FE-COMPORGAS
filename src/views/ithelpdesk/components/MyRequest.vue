@@ -29,7 +29,6 @@
           </v-col>
           <v-col cols="6" sm="6" md="3">
             <date-picker 
-              :format="dateFormat"
               v-model="startDate" 
               format="DD-MM-YYYY" 
               placeholder="Start Date"
@@ -38,7 +37,6 @@
           </v-col>
           <v-col cols="6" sm="6" md="3">
             <date-picker 
-              :format="dateFormat"
               v-model="endDate" 
               :disabled-date="disabledFromStartDate"
               format="DD-MM-YYYY" 
@@ -78,10 +76,12 @@
             <template #[`item.statusName`]="{ item }">
               <v-chip 
                 small 
-                :class="getStatusClass(item.statusId)"
+                :class="getStatusClass(item.statusId, item.isLate)"
                 class="status-chip"
               >
-                <span class="status-text">{{ item.statusName }}</span>
+                <span class="status-text">
+                  {{ item.isLate && item.statusId !== 'RESOLVED' ? 'Late' : item.statusName }}
+                </span>
                 <v-icon color="white" x-small class="ml-1">
                   {{ getStatusIcon(item.statusId) }}
                 </v-icon>
@@ -148,71 +148,131 @@ export default {
       totalPage: 1,
       totalItems: 0,
       itemsPerpage: 10,
-      dateFormat: "DD-MM-YYYY",
       loading: false,
       helpdeskModal: false,
       datas: {},
-      icons: {
-        mdiMagnify,
-        mdiCheck,
-        mdiCheckAll,
-        mdiPlus,
-      },
+      icons: { mdiMagnify, mdiCheck, mdiCheckAll, mdiPlus },
       startDate: null,
       endDate: null,
       headers: [
         { text: "Ticket Number", value: "number" },
-        { text: "Date", value: "createdAt" },
-        { text: "Title", value: "title" },
-        { text: "PIC", value: "picName" },
-        { text: "Service", value: "catalogName" },
-        { text: "Location", value: "officeName" },
-        { text: "Status", value: "statusName" },
+        { text: "Date",          value: "createdAt" },
+        { text: "Title",         value: "title" },
+        { text: "PIC",           value: "picName" },
+        { text: "Service",       value: "catalogName" },
+        { text: "Location",      value: "officeName" },
+        { text: "Status",        value: "statusName" },
       ],
       items: [],
       dataCatalog: [],
       keyword: null,
       catalogId: null,
       status: null,
+      // SLA map: { catalogName -> total SLA hours }
+      catalogSlaMap: {},
     };
   },
+
   computed: {
     paginationVisible() {
       if (this.$vuetify.breakpoint.xs) return 3;
       if (this.$vuetify.breakpoint.sm) return 5;
       return 7;
-    }
+    },
   },
-  created() {
-    this.getCatalog();
+
+  async created() {
+    // Load SLA map & catalog bersamaan, baru fetch tiket
+    await Promise.all([
+      this.getCatalog(),
+      this.loadCatalogSlaMap(),
+    ]);
     this.getTicket(1);
   },
+
   watch: {
-    startDate() {
-      this.getTicket(1);
-    },
-    endDate() {
-      this.getTicket(1);
-    },
-    catalogId() {
-      this.getTicket(1);
-    },
-    keyword() {
-      this.getTicket(1);
-    },
+    startDate() { this.getTicket(1); },
+    endDate()   { this.getTicket(1); },
+    catalogId() { this.getTicket(1); },
+    keyword()   { this.getTicket(1); },
   },
+
   methods: {
-    formatDate(x) {
-      return moment(x).format("DD-MM-YYYY");
+    // ─── SLA Helpers ───────────────────────────────────────────────
+    async loadCatalogSlaMap() {
+      try {
+        const res      = await getTicket.getHelpDeskPage({ size: 100, page: 0 });
+        const catalogs = res.data.data.content || [];
+        this.catalogSlaMap = {};
+        catalogs.forEach(c => {
+          this.catalogSlaMap[c.name] = (c.slaDays * 24) + (c.slaHours || 0);
+        });
+      } catch (e) {
+        console.error("Failed to load catalog SLA map:", e);
+      }
     },
-    disabledFromStartDate(date) {
-      const today = new Date(this.startDate);
-      today.setHours(0, 0, 0, 0);
-      return date <= today - 1;
+
+    isTicketLate(item) {
+      if (item.statusId === "RESOLVED") return false;
+      const slaTotalHours = this.catalogSlaMap[item.catalogName] || 0;
+      if (slaTotalHours === 0) return false;
+      const ageHours = moment().diff(moment(item.createdAt), "hours");
+      return ageHours > slaTotalHours;
     },
+
+    // ─── Data Fetching ─────────────────────────────────────────────
+    async getCatalog() {
+      try {
+        const res    = await catalogService.getAllOptions();
+        this.dataCatalog = res.data.data.map(c => ({ value: c.value, text: c.label }));
+      } catch (e) { console.error(e); }
+    },
+
+    async getTicket(page) {
+      this.loading = true;
+      try {
+        const param = {
+          keyword:   this.keyword,
+          catalog:   this.catalogId,
+          status:    this.status,
+          startDate: this.startDate ? moment(this.startDate).format("YYYY-MM-DD") : null,
+          endDate:   this.endDate   ? moment(this.endDate).format("YYYY-MM-DD")   : null,
+          page:      page - 1,
+          size:      this.itemsPerpage,
+        };
+
+        const res  = await getTicket.getTicket(param);
+        const data = res.data.data.content || [];
+
+        // Tandai tiket yang LATE untuk chip
+        this.items = data.map(item => ({
+          ...item,
+          isLate: this.isTicketLate(item),
+        }));
+
+        this.totalItems = res.data.data.totalElements || 0;
+        this.totalPage  = Math.ceil(this.totalItems / this.itemsPerpage) || 1;
+      } catch (e) {
+        console.error(e);
+        this.items = [];
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // ─── Actions ───────────────────────────────────────────────────
+    async onPageChangeDetil(value) {
+      await this.getTicket(value);
+    },
+
+    handleClick(value) {
+      this.$router.push(`/ithelpdesk/my-request/${value.id}`);
+    },
+
     addTicket() {
       this.helpdeskModal = true;
     },
+
     closeHelpdeskModal(val) {
       this.helpdeskModal = false;
       this.getTicket(1);
@@ -220,133 +280,66 @@ export default {
         this.$router.push(`/ithelpdesk/my-request/${val}`);
       }
     },
-    async getCatalog() {
-      const res = await catalogService.getAllOptions();
-      const data = res.data.data;
-      const filter = data.map((project) => ({
-        value: project.value,
-        text: project.label,
-      }));
-      this.dataCatalog = filter;
-    },
-    async getTicket(page) {
-      this.loading = true;
-      const param = {
-        keyword: this.keyword,
-        startDate:
-          this.startDate !== null && this.startDate !== ""
-            ? moment(this.startDate).format("YYYY-MM-DD")
-            : null,
-        endDate:
-          this.endDate !== null && this.endDate !== ""
-            ? moment(this.endDate).format("YYYY-MM-DD")
-            : null,
-        catalog: this.catalogId,
-        status: this.status,
-      };
-      const res = await getTicket.getTicket(param);
-      const data = res.data.data.content;
-      this.items = data;
 
-      this.totalPage =
-        res.data.data.totalElements > 10
-          ? Math.ceil(res.data.data.totalElements / 10)
-          : 1;
-      this.totalItems = res.data.data.totalElements;
-      this.loading = false;
+    // ─── Helpers ───────────────────────────────────────────────────
+    formatDate(x) {
+      return moment(x).format("DD-MM-YYYY");
     },
-    async onPageChangeDetil(value) {
-      await this.getTicket(value);
+
+    disabledFromStartDate(date) {
+      if (!this.startDate) return false;
+      const start = new Date(this.startDate);
+      start.setHours(0, 0, 0, 0);
+      return date < start;
     },
-    handleClick(value) {
-      this.$router.push(`/ithelpdesk/my-request/${value.id}`);
-    },
-    errorPopup(val) {
-      Swal.fire({
-        title: "Failed",
-        text: val,
-        icon: "error",
-        button: false,
-        timer: 2000,
-      });
-    },
-    getStatusClass(statusId) {
-      const classes = {
-        SUBMITTED: "status-submitted",
+
+    // isLate override chip jadi merah
+    getStatusClass(statusId, isLate) {
+      if (isLate && statusId !== "RESOLVED") return "status-late";
+      return {
+        SUBMITTED:  "status-submitted",
         INPROGRESS: "status-progress",
-        PENDING: "status-pending",
-        ASSIGNED: "status-assigned",
-        LATE: "status-late",
-        RESOLVED: "status-solved",
-      };
-      return classes[statusId] || "";
+        PENDING:    "status-pending",
+        ASSIGNED:   "status-assigned",
+        LATE:       "status-late",
+        RESOLVED:   "status-solved",
+      }[statusId] || "";
     },
+
     getStatusIcon(statusId) {
       return statusId === "RESOLVED" ? this.icons.mdiCheckAll : this.icons.mdiCheck;
+    },
+
+    errorPopup(val) {
+      Swal.fire({ title: "Failed", text: val, icon: "error", button: false, timer: 2000 });
     },
   },
 };
 </script>
 
 <style scoped>
-.helpdesk-container {
-  width: 100%;
-}
+.helpdesk-container { width: 100%; }
+.main-card          { margin-top: 12px; }
 
-.main-card {
-  margin-top: 12px;
-}
-
-.status-chip {
-  color: white !important;
-  border-radius: 5px;
-  height: 24px !important;
-}
-
-.status-text {
-  font-size: 10px;
-}
+.status-chip  { color: white !important; border-radius: 5px; height: 24px !important; }
+.status-text  { font-size: 10px; }
 
 .status-submitted { background-color: #0172b9 !important; }
-.status-progress { background-color: #0172b9 !important; }
-.status-pending { background-color: #ff7a00 !important; }
-.status-assigned { background-color: #a11497 !important; }
-.status-late { background-color: #ec323f !important; }
-.status-solved { background-color: #adc43b !important; }
+.status-progress  { background-color: #0172b9 !important; }
+.status-pending   { background-color: #ff7a00 !important; }
+.status-assigned  { background-color: #a11497 !important; }
+.status-late      { background-color: #ec323f !important; }
+.status-solved    { background-color: #adc43b !important; }
 
-.pagination-wrapper {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-}
+.pagination-wrapper { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.total-data-text    { font-weight: 600; font-size: 13px; }
+.table-container    { width: 100%; }
 
-.total-data-text {
-  font-weight: 600;
-  font-size: 13px;
-}
+::v-deep .v-data-table > .v-data-table__wrapper > table { min-width: 100%; }
+::v-deep .v-data-table tbody tr { cursor: pointer; }
+::v-deep .v-data-table tbody tr:hover { background-color: #f5f5f5 !important; }
 
-.table-container {
-  width: 100%;
-}
-
-::v-deep .v-data-table > .v-data-table__wrapper > table {
-  min-width: 100%;
-}
-
-::v-deep .v-data-table tbody tr {
-  cursor: pointer;
-}
-
-::v-deep .v-data-table tbody tr:hover {
-  background-color: #f5f5f5 !important;
-}
-
-.datetime-picker {
-  width: 100%;
-}
-
+.datetime-picker { width: 100%; }
 ::v-deep .mx-input {
   height: 40px;
   border: 1px solid rgba(0,0,0,0.38);
@@ -354,9 +347,5 @@ export default {
   padding: 0 12px;
 }
 
-.btn-blue {
-  background-color: rgb(1, 114, 185) !important;
-  color: white;
-  text-transform: none;
-}
+.btn-blue { background-color: rgb(1, 114, 185) !important; color: white; text-transform: none; }
 </style>
