@@ -6,7 +6,7 @@
         <v-card flat outlined>
           <v-card-text>
             <v-row align="center">
-              <v-col cols="12" sm="6" :md="canViewAnalytics ? 6 : 6">
+              <v-col cols="12" sm="12" :md="canViewAnalytics ? 6 : 6">
                 <v-text-field
                   v-model="searchQuery"
                   :append-icon="icons.mdiMagnify"
@@ -325,7 +325,7 @@ export default {
       searchQuery: "",
       selectedCategory: null,
       linkFilter: null,
-      sortBy: "name",
+      sortBy: "category",
       
       userRole: null,
       
@@ -345,8 +345,8 @@ export default {
       businessApps: [],
       
       sortOptions: [
+        { text: "Category", value: "category" },
         { text: "Name (A-Z)", value: "name" },
-        { text: "Name (Z-A)", value: "name_desc" },
       ],
       
       tableHeaders: [
@@ -455,7 +455,7 @@ export default {
       } else if (this.sortBy === "name_desc") {
         filtered.sort((a, b) => b.name.localeCompare(a.name));
       }
-      
+
       return filtered;
     },
     
