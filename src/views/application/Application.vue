@@ -6,7 +6,7 @@
         <v-card flat outlined>
           <v-card-text>
             <v-row align="center">
-              <v-col cols="12" sm="6" :md="canViewAnalytics ? 4 : 6">
+              <v-col cols="12" sm="6" :md="canViewAnalytics ? 6 : 6">
                 <v-text-field
                   v-model="searchQuery"
                   :append-icon="icons.mdiMagnify"
@@ -81,14 +81,11 @@
           :key="index"
           cols="12"
           sm="6"
-          md="3"
+          md="6"
         >
           <v-card
             :class="stat.class"
-            class="stat-card"
-            hover
-            @click="filterByCategory(stat.category)"
-            style="cursor: pointer"
+            class="stat-card"          
           >
             <v-card-text>
               <v-icon large style="color: white">{{ stat.icon }}</v-icon>
@@ -96,15 +93,6 @@
               <div class="text-h4 font-weight-bold white--text mt-2">
                 {{ stat.value }}
               </div>
-              <div class="caption white--text mt-1">
-                {{ calculatePercentage(stat.value) }}% of total
-              </div>
-              <v-progress-linear
-                :value="calculatePercentage(stat.value)"
-                color="white"
-                height="4"
-                class="mt-2"
-              ></v-progress-linear>
             </v-card-text>
           </v-card>
         </v-col>
@@ -161,7 +149,7 @@
             </v-card-title>
             <v-data-table
               :headers="tableHeaders"
-              :items="flattenedApps"
+              :items="filteredTableApps"
               :search="searchQuery"
               class="elevation-1"
               :footer-props="{
@@ -174,7 +162,11 @@
                 </v-avatar>
               </template>
               <template #[`item.link`]="{ item }">
+                <v-chip v-if="!item.link || item.link.trim() === ''" x-small color="grey">
+                  No Link
+                </v-chip>
                 <v-btn
+                  v-else
                   icon
                   small
                   color="primary"
@@ -308,6 +300,7 @@ import {
   mdiTable,
   mdiDownload,
   mdiOpenInNew,
+  mdiShape,
 } from "@mdi/js";
 import AddApps from "./component/CreateAppsFormModal.vue";
 import ApplicationService from "../../services/application/applicationServices";
@@ -328,13 +321,12 @@ export default {
       openModalCatalog: false,
       currentIndex: 0,
       
-      // New features
-      viewMode: "grid", // 'grid' or 'analytics'
+      viewMode: "grid",
       searchQuery: "",
       selectedCategory: null,
+      linkFilter: null,
       sortBy: "name",
       
-      // User role
       userRole: null,
       
       icons: {
@@ -348,13 +340,13 @@ export default {
         mdiTable,
         mdiDownload,
         mdiOpenInNew,
+        mdiShape,
       },
       businessApps: [],
       
       sortOptions: [
         { text: "Name (A-Z)", value: "name" },
         { text: "Name (Z-A)", value: "name_desc" },
-        { text: "Category", value: "category" },
       ],
       
       tableHeaders: [
@@ -365,7 +357,6 @@ export default {
         { text: "Link", value: "link", sortable: false },
       ],
       
-      // Chart options
       pieChartOptions: {
         chart: {
           type: "pie",
@@ -406,12 +397,10 @@ export default {
   },
   
   computed: {
-    // Check if user can view analytics
     canViewAnalytics() {
       return this.userRole === "SUPER" || this.userRole === "IT_LEAD";
     },
     
-    // Flatten all apps for table view
     flattenedApps() {
       const apps = [];
       this.businessApps.forEach(category => {
@@ -427,16 +416,29 @@ export default {
       return apps;
     },
     
-    // Filter apps based on search and category
+    filteredTableApps() {
+      let filtered = [...this.flattenedApps];
+      
+      if (this.linkFilter === "active") {
+        filtered = filtered.filter(app => 
+          app.link && typeof app.link === 'string' && app.link.trim() !== ''
+        );
+      } else if (this.linkFilter === "inactive") {
+        filtered = filtered.filter(app => 
+          !app.link || typeof app.link !== 'string' || app.link.trim() === ''
+        );
+      }
+      
+      return filtered;
+    },
+    
     filteredBusinessApps() {
       let filtered = [...this.businessApps];
       
-      // Filter by category
       if (this.selectedCategory) {
         filtered = filtered.filter(item => item.name === this.selectedCategory);
       }
       
-      // Filter by search
       if (this.searchQuery) {
         const query = this.searchQuery.toLowerCase();
         filtered = filtered.filter(item => {
@@ -448,7 +450,6 @@ export default {
         });
       }
       
-      // Sort
       if (this.sortBy === "name") {
         filtered.sort((a, b) => a.name.localeCompare(b.name));
       } else if (this.sortBy === "name_desc") {
@@ -458,7 +459,6 @@ export default {
       return filtered;
     },
     
-    // Category options for filter
     categoryOptions() {
       return this.businessApps.map(item => ({
         text: item.name,
@@ -466,44 +466,30 @@ export default {
       }));
     },
     
-    // Stats for analytics cards
     appStats() {
-      const stats = [];
-      
-      // Total apps
       const totalApps = this.flattenedApps.length;
-      stats.push({
-        title: "Total Applications",
-        value: totalApps,
-        icon: this.icons.mdiDotsGrid,
-        class: "stat-total",
-        category: null,
-      });
+      const totalCategories = this.businessApps.length;
       
-      // Apps per category (top 3)
-      const categoryCounts = {};
-      this.businessApps.forEach(category => {
-        if (category.apps) {
-          categoryCounts[category.name] = category.apps.length;
-        }
-      });
+      const activeApps = this.flattenedApps.filter(app => 
+        app.link && typeof app.link === 'string' && app.link.trim() !== ''
+      ).length;
       
-      const sortedCategories = Object.entries(categoryCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 3);
+      const inactiveApps = totalApps - activeApps;
       
-      const colors = ["stat-primary", "stat-secondary", "stat-success"];
-      sortedCategories.forEach(([name, count], index) => {
-        stats.push({
-          title: name,
-          value: count,
+      return [
+        {
+          title: "Total Applications",
+          value: this.flattenedApps.length,
           icon: this.icons.mdiDotsGrid,
-          class: colors[index],
-          category: name,
-        });
-      });
-      
-      return stats;
+          class: "stat-total",
+        },
+        {
+          title: "Total Categories",
+          value: this.businessApps.length,
+          icon: this.icons.mdiShape,
+          class: "stat-primary",
+        },
+      ];
     },
   },
   
@@ -523,7 +509,6 @@ export default {
   
   methods: {
     updateCharts() {
-      // Update pie chart
       const categoryData = {};
       this.businessApps.forEach(category => {
         if (category.apps) {
@@ -534,20 +519,20 @@ export default {
       this.pieChartOptions.labels = Object.keys(categoryData);
       this.pieChartSeries = Object.values(categoryData);
       
-      // Update bar chart
       this.barChartOptions.xaxis.categories = Object.keys(categoryData);
       this.barChartSeries[0].data = Object.values(categoryData);
     },
     
-    calculatePercentage(value) {
-      const total = this.flattenedApps.length;
-      if (total === 0) return 0;
-      return ((value / total) * 100).toFixed(1);
-    },
-    
-    filterByCategory(category) {
-      if (category) {
-        this.selectedCategory = category;
+    filterByCategory(filter) {
+      if (!filter) return;
+      
+      if (filter === "active" || filter === "inactive") {
+        this.selectedCategory = null;
+        this.linkFilter = filter;
+        this.viewMode = "analytics";
+      } else {
+        this.selectedCategory = filter;
+        this.linkFilter = null;
         this.viewMode = "grid";
       }
     },
@@ -590,7 +575,6 @@ export default {
       document.body.removeChild(link);
     },
     
-    // Original methods
     updateDialogVisible(value) {
       this.openModalCatalog = false;
       this.dialogVisible = value;
@@ -719,11 +703,6 @@ export default {
 <style scoped>
 .stat-card {
   text-align: center;
-  transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-5px);
 }
 
 .stat-total {
@@ -736,12 +715,12 @@ export default {
   color: white;
 }
 
-.stat-secondary {
+.stat-success {
   background: linear-gradient(135deg, #adc43b, #c2dc57);
   color: white;
 }
 
-.stat-success {
+.stat-warning {
   background: linear-gradient(135deg, #ff7a00, #e6be00);
   color: white;
 }
