@@ -170,9 +170,16 @@
               </div>
             </v-timeline-item>
           </v-timeline>
-          <div class="mt-8" v-if="ticketDispatch !== null">
-            <span style="color: #101010">Dispatch Note</span>
-            <v-textarea outlined disabled auto-grow :value="ticketDispatch.note"></v-textarea>
+
+          <!-- Dispatch Note hanya tampil jika sudah pernah dispatch dan ada note -->
+          <div class="dispatch-note-box mt-6" v-if="isValidDispatchNote">
+            <div class="dispatch-note-header">
+              <v-icon small color="#0172b9" class="mr-1">{{ icons.mdiInformationOutline }}</v-icon>
+              <span class="dispatch-note-title">Dispatch Note</span>
+            </div>
+            <div class="dispatch-note-content">
+              {{ ticketDispatch.note }}
+            </div>
           </div>
         </v-col>
       </v-row>
@@ -197,37 +204,38 @@
         <v-card-text>
           <form @submit.prevent="submit">
             <label class="required">Choose Location</label>
-            <v-select 
-              dense 
+            <v-select
+              dense
               v-model.trim="$v.dispatchLocation.$model"
-              :error-messages="getErrors('dispatchLocation', $v.dispatchLocation)" 
+              :error-messages="getErrors('dispatchLocation', $v.dispatchLocation)"
               @blur="$v.dispatchLocation.$touch()"
               @change="onLocationChange"
-              outlined 
-              :items="filteredLocationList" 
+              outlined
+              :items="filteredLocationList"
               placeholder="Location"
               :no-data-text="'No location available for this catalog'"
             ></v-select>
             <label class="required">Choose PIC</label>
-            <v-select 
-              dense 
+            <v-select
+              dense
               v-model.trim="$v.dispatchPic.$model"
-              :error-messages="getErrors('dispatchPic', $v.dispatchPic)" 
-              @blur="$v.dispatchPic.$touch()" 
+              :error-messages="getErrors('dispatchPic', $v.dispatchPic)"
+              @blur="$v.dispatchPic.$touch()"
               outlined
-              :items="filteredPicList" 
+              :items="filteredPicList"
               :disabled="!dispatchLocation"
               placeholder="PIC"
               :no-data-text="!dispatchLocation ? 'Please select location first' : 'No PIC available for this location'"
             ></v-select>
             <label class="required">Note</label>
-            <v-textarea 
+            <v-textarea
               v-model.trim="$v.dispatchNote.$model"
-              :error-messages="getErrors('dispatchNote', $v.dispatchNote)" 
-              @blur="$v.dispatchNote.$touch()" 
+              :error-messages="getErrors('dispatchNote', $v.dispatchNote)"
+              @blur="$v.dispatchNote.$touch()"
               outlined
-              dense 
-              placeholder="input note"
+              dense
+              rows="3"
+              placeholder="Input note"
             ></v-textarea>
             <v-btn :loading="dispatchLoading" style="width: 100%" @click="saveDispatch" class="btn-action mr-4 mb-6">
               Dispatch Ticket
@@ -283,6 +291,7 @@ import {
   mdiFilePowerpointBox,
   mdiCheck,
   mdiCheckAll,
+  mdiInformationOutline,
 } from "@mdi/js";
 
 export default {
@@ -304,6 +313,7 @@ export default {
         mdiFilePowerpointBox,
         mdiCheck,
         mdiCheckAll,
+        mdiInformationOutline,
       },
       baseUrl: process.env.VUE_APP_PERTAGAS,
       loading: false,
@@ -322,7 +332,7 @@ export default {
       dataClick: {},
       dataPic: [],
       dataLoc: [],
-      catalogPicList: [], // Menyimpan list PIC dari catalog
+      catalogPicList: [],
       imageSrc: "",
       imagePreviewDialog: false,
       isITLead: false,
@@ -330,43 +340,27 @@ export default {
     };
   },
   computed: {
-    // Filter location berdasarkan PIC yang ada di catalog dan aktif
+    isValidDispatchNote() {
+      if (!this.ticketDispatch || !this.ticketDispatch.note) return false;
+      const note = this.ticketDispatch.note.trim();
+      if (note === '' || note === 'null') return false;
+      if (note.toLowerCase().includes('auto-assigned')) return false;
+      return true;
+    },
     filteredLocationList() {
-      if (!this.catalogPicList.length) {
-        return [];
-      }
-      
-      // Ambil semua location yang punya PIC aktif di catalog ini
+      if (!this.catalogPicList.length) return [];
       const availableLocations = this.catalogPicList
         .filter(pic => pic.active === true)
         .map(pic => pic.officeLocationId);
-      
-      // Hilangkan duplikat
       const uniqueLocations = [...new Set(availableLocations)];
-      
-      // Filter dataLoc berdasarkan location yang tersedia
       return this.dataLoc.filter(loc => uniqueLocations.includes(loc.value));
     },
-    
-    // Filter PIC berdasarkan location yang dipilih dan yang aktif
     filteredPicList() {
-      if (!this.dispatchLocation || !this.catalogPicList.length) {
-        return [];
-      }
-      
-      // Filter PIC yang sesuai dengan location dan status active
-      const filtered = this.catalogPicList
-        .filter(pic => 
-          pic.officeLocationId === this.dispatchLocation && 
-          pic.active === true
-        )
-        .map(pic => ({
-          value: pic.userId,
-          text: pic.userName
-        }));
-      
-      return filtered;
-    }
+      if (!this.dispatchLocation || !this.catalogPicList.length) return [];
+      return this.catalogPicList
+        .filter(pic => pic.officeLocationId === this.dispatchLocation && pic.active === true)
+        .map(pic => ({ value: pic.userId, text: pic.userName }));
+    },
   },
   created() {
     this.getUserData();
@@ -399,7 +393,6 @@ export default {
     dispatchNote: { required },
   },
   methods: {
-    // Method baru untuk get detail catalog beserta list PIC nya
     async getCatalogDetail(catalogId) {
       try {
         const res = await ticketService.getHelpDeskById(catalogId);
@@ -410,30 +403,19 @@ export default {
         console.error("Failed to get catalog detail:", error);
       }
     },
-    
-    // Method untuk handle perubahan location
     onLocationChange() {
-      // Reset PIC selection ketika location berubah
       this.dispatchPic = "";
       this.$v.dispatchPic.$reset();
     },
-    
     async fetchTicketData(ticketId) {
       this.loading = true;
       try {
         const param = {
-          keyword: null,
-          location: null,
-          startDate: null,
-          endDate: null,
-          catalog: null,
-          status: null,
-          size: 1000,
-          page: 0,
+          keyword: null, location: null, startDate: null,
+          endDate: null, catalog: null, status: null, size: 1000, page: 0,
         };
         const res = await ticketService.getTicketPic(param);
         const ticket = res.data.data.content.find(x => x.id === ticketId);
-
         if (ticket) {
           this.dataClick = ticket;
           this.getCatalogDetail(ticket.catalogId);
@@ -464,10 +446,12 @@ export default {
         this.dispatchLoading = false;
 
         if (res.data.status === 200) {
+          this.ticketDispatch = { note: this.dispatchNote };
           this.closeModal();
           this.successPopup(res.data.message);
           this.dataClick = res.data.data;
           this.getTimeline(res.data.data.id);
+          this.getTicketLatestDispatch(res.data.data.id);
         } else {
           this.errorPopup(res.data.message);
         }
@@ -492,9 +476,7 @@ export default {
     scrollChatbox() {
       this.$nextTick(() => {
         const container = this.$refs.chatbox;
-        if (container) {
-          container.scrollTop = container.scrollHeight;
-        }
+        if (container) container.scrollTop = container.scrollHeight;
       });
     },
     showImage(fileUrl) {
@@ -514,33 +496,19 @@ export default {
     },
     resolved() {
       Swal.fire({
-        icon: "warning",
-        title: "Resolved",
+        icon: "warning", title: "Resolved",
         text: "Are you sure want to resolve this ticket?",
-        showCancelButton: true,
-        showConfirmButton: true,
-        allowEscapeKey: false,
-        allowOutsideClick: false,
-      }).then((result) => {
-        if (result.isConfirmed) {
-          this.postResolved();
-        }
-      });
+        showCancelButton: true, showConfirmButton: true,
+        allowEscapeKey: false, allowOutsideClick: false,
+      }).then((result) => { if (result.isConfirmed) this.postResolved(); });
     },
     resume() {
       Swal.fire({
-        icon: "warning",
-        title: "Resume",
+        icon: "warning", title: "Resume",
         text: "Are you sure want to resume this ticket?",
-        showCancelButton: true,
-        showConfirmButton: true,
-        allowEscapeKey: false,
-        allowOutsideClick: false,
-      }).then((result) => {
-        if (result.isConfirmed) {
-          this.postResume();
-        }
-      });
+        showCancelButton: true, showConfirmButton: true,
+        allowEscapeKey: false, allowOutsideClick: false,
+      }).then((result) => { if (result.isConfirmed) this.postResume(); });
     },
     async postResume() {
       this.loading = true;
@@ -556,18 +524,11 @@ export default {
     },
     pending() {
       Swal.fire({
-        icon: "warning",
-        title: "Pending",
+        icon: "warning", title: "Pending",
         text: "Are you sure want to pending this ticket?",
-        showCancelButton: true,
-        showConfirmButton: true,
-        allowEscapeKey: false,
-        allowOutsideClick: false,
-      }).then((result) => {
-        if (result.isConfirmed) {
-          this.postPending();
-        }
-      });
+        showCancelButton: true, showConfirmButton: true,
+        allowEscapeKey: false, allowOutsideClick: false,
+      }).then((result) => { if (result.isConfirmed) this.postPending(); });
     },
     async postPending() {
       this.loading = true;
@@ -593,16 +554,11 @@ export default {
       }
       this.loading = false;
     },
-    formatDate(x) {
-      return moment(x).format("DD-MM-YYYY");
-    },
-    formatDateTime(x) {
-      return moment(x).format("HH:mm DD-MM-YYYY");
-    },
+    formatDate(x) { return moment(x).format("DD-MM-YYYY"); },
+    formatDateTime(x) { return moment(x).format("HH:mm DD-MM-YYYY"); },
     async getLoc() {
       const res = await ticketService.getLocation();
-      const data = res.data.data;
-      this.dataLoc = data.map((project) => ({
+      this.dataLoc = res.data.data.map((project) => ({
         value: project.value,
         text: project.label,
       }));
@@ -621,9 +577,7 @@ export default {
       const res = await ticketService.ticketGetDispatch(param);
       this.ticketDispatch = res.data.data;
     },
-    goBack() {
-      this.$router.go(-1);
-    },
+    goBack() { this.$router.go(-1); },
     deleteImage() {
       this.$refs.uploader.value = "";
       this.imgUpload = null;
@@ -631,38 +585,20 @@ export default {
       this.isSelecting = false;
     },
     successPopup(val) {
-      Swal.fire({
-        title: "Success",
-        text: val,
-        icon: "success",
-        button: false,
-        timer: 2000,
-      });
+      Swal.fire({ title: "Success", text: val, icon: "success", button: false, timer: 2000 });
     },
     errorPopup(val) {
-      Swal.fire({
-        title: "Failed",
-        text: val,
-        icon: "error",
-        button: false,
-        timer: 2000,
-      });
+      Swal.fire({ title: "Failed", text: val, icon: "error", button: false, timer: 2000 });
     },
     async sendMessage() {
       if (this.message.trim() !== "") {
-        const param = {
-          content: this.message,
-          ticketId: this.dataClick.id,
-        };
+        const param = { content: this.message, ticketId: this.dataClick.id };
         const res = await ticketService.postChat(param);
-
         if (res.data.status === 200) {
-          // Auto-update status ke INPROGRESS jika masih ASSIGNED atau SUBMITTED
           if (this.dataClick.statusId === 'ASSIGNED' || this.dataClick.statusId === 'SUBMITTED') {
             this.dataClick.statusId = 'INPROGRESS';
             this.dataClick.statusName = 'In Progress';
           }
-          
           if (this.selectedFile1 !== null) {
             await this.uploadFile(res.data.data);
           } else {
@@ -678,9 +614,7 @@ export default {
     async uploadFile(data) {
       const par = new FormData();
       par.append("file", this.selectedFile1);
-      const api = "ticket-chat/document/";
-
-      hitAPI.post(`${api}${data.id}`, par).then((res) => {
+      hitAPI.post(`ticket-chat/document/${data.id}`, par).then((res) => {
         if (res.data.status === 200) {
           this.deleteImage();
           this.getTimeline(data.ticketId);
@@ -692,12 +626,10 @@ export default {
     onFileChanged(e) {
       const file = e.target.files[0];
       if (!file) return;
-
       if (file.size > 5000000) {
         this.errorPopup("File upload exceeds the 5MB limit!");
         return;
       }
-
       const allowedTypes = [
         "image/png", "image/jpeg", "image/jpg",
         "application/pdf", "application/zip", "application/x-zip-compressed",
@@ -706,9 +638,8 @@ export default {
         "application/vnd.ms-excel",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "application/vnd.ms-powerpoint",
-        "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
       ];
-
       if (allowedTypes.includes(file.type)) {
         this.imgUpload = URL.createObjectURL(file);
         this.selectedFile1 = file;
@@ -718,9 +649,7 @@ export default {
     },
     onButtonClick() {
       this.isSelecting = true;
-      window.addEventListener("focus", () => {
-        this.isSelecting = false;
-      }, { once: true });
+      window.addEventListener("focus", () => { this.isSelecting = false; }, { once: true });
       this.$refs.uploader.click();
     },
     getUserData() {
@@ -803,5 +732,33 @@ export default {
 .required:after {
   content: " *";
   color: red;
+}
+
+/* Dispatch Note - tampilan compact & rapi */
+.dispatch-note-box {
+  border: 1px solid #e0e0e0;
+  border-left: 4px solid #0172b9;
+  border-radius: 6px;
+  padding: 10px 14px;
+  background-color: #f5f9ff;
+}
+
+.dispatch-note-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.dispatch-note-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0172b9;
+}
+
+.dispatch-note-content {
+  font-size: 13px;
+  color: #333333;
+  line-height: 1.5;
+  white-space: pre-wrap;
 }
 </style>
