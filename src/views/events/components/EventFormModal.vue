@@ -400,17 +400,19 @@ export default {
             location: this.location,
             officeLocationId: this.officeLocation,
           };
+
           const res = await postEvent.postEvents(param);
+          if (!res) return;
+
           if (res.data.status === 200) {
             this.uploadFile(res.data.data.id);
           } else {
             Swal.fire({
               icon: "error",
               title: "Failed",
-              text:
-                res.data.errors !== null
-                  ? res.data.errors[0].message
-                  : res.data.message,
+              text: res.data.errors !== null
+                ? res.data.errors[0].message
+                : res.data.message,
               buttons: {
                 cancel: false,
                 confirm: true,

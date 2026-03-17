@@ -5,14 +5,7 @@
         <v-card-title>
           <v-row align="center">
             <v-col cols="12" sm="6" md="4" lg="9">
-              <div
-                style="
-                  font-size: 18px;
-                  line-height: 28px;
-                  font-weight: 600;
-                  color: #000000;
-                "
-              >
+              <div style="font-size: 18px; line-height: 28px; font-weight: 600; color: #000000;">
                 {{ title }}
               </div>
             </v-col>
@@ -51,7 +44,7 @@
               @blur="$v.idYeaster.$touch()"
               @keydown="allowNumeric"
               outlined
-              placeholder="Room Capacity"
+              placeholder="ID Yeaster"
             ></v-text-field>
             <label class="required">Room Capacity</label>
             <v-text-field
@@ -78,6 +71,7 @@
     </v-dialog>
   </v-row>
 </template>
+
 <script>
 import { required } from "vuelidate/lib/validators";
 import { mdiClose, mdiFileDocumentOutline } from "@mdi/js";
@@ -93,6 +87,7 @@ export default {
     return {
       title: "Create Meeting Room",
       loading: false,
+      localItem: null,
       id: "",
       name: "",
       officeId: "",
@@ -107,21 +102,11 @@ export default {
     };
   },
   validations: {
-    name: {
-      required,
-    },
-    officeId: {
-      required,
-    },
-    capacity: {
-      required,
-    },
-    description: {
-      required,
-    },
-    idYeaster: {
-      required,
-    },
+    name: { required },
+    officeId: { required },
+    capacity: { required },
+    description: { required },
+    idYeaster: { required },
   },
   props: {
     open: Boolean,
@@ -140,7 +125,7 @@ export default {
       },
       set(value) {
         if (!value) {
-          this.item = null;
+          this.localItem = null;
           this.form = {};
           this.id = "";
           this.$emit("close");
@@ -150,16 +135,13 @@ export default {
   },
   methods: {
     allowNumeric(event) {
-      // Allow navigation keys like arrow keys, delete, backspace, etc.
       if (
         (event.keyCode >= 35 && event.keyCode <= 40) ||
-        event.keyCode === 8 || // Backspace
-        event.keyCode === 46 // Delete
+        event.keyCode === 8 ||
+        event.keyCode === 46
       ) {
         return;
       }
-
-      // Allow numeric keys
       if (event.keyCode < 48 || event.keyCode > 57) {
         event.preventDefault();
       }
@@ -186,7 +168,6 @@ export default {
         default:
           break;
       }
-
       return errors;
     },
     async getOfficeOptions() {
@@ -195,22 +176,24 @@ export default {
       this.officeOptions = data;
     },
     edit() {
-      if (this.item.id !== undefined) {
+      this.localItem = this.item;
+      if (this.localItem && this.localItem.id !== undefined) {
         this.title = "Edit Meeting Room";
-        this.id = this.item.id;
-        this.name = this.item.name;
-        this.officeId = this.item.officeId;
-        this.capacity = this.item.capacity;
-        this.description = this.item.description;
-        this.idYeaster = this.item.yeastarId;
+        this.id = this.localItem.id;
+        this.name = this.localItem.name;
+        this.officeId = this.localItem.officeId;
+        this.capacity = this.localItem.capacity;
+        this.description = this.localItem.description;
+        this.idYeaster = this.localItem.yeastarId;
       } else {
         this.title = "Create Meeting Room";
-        this.item = null;
+        this.localItem = null;
         this.id = "";
         this.name = "";
         this.officeId = "";
         this.capacity = "";
         this.description = "";
+        this.idYeaster = "";
         this.$v.$reset();
         this.form = {};
       }
@@ -233,8 +216,9 @@ export default {
           description: this.description,
           yeastarId: this.idYeaster,
         };
+
         const res =
-          this.item == null
+          this.localItem == null
             ? await meetingRoomService.add(param)
             : await meetingRoomService.update(param);
 
@@ -251,7 +235,7 @@ export default {
           }).then(async (result) => {
             if (result) {
               this.loading = false;
-              this.item = null;
+              this.localItem = null;
               this.form = {};
               this.$emit("close");
             }
@@ -275,7 +259,7 @@ export default {
     },
     close() {
       this.$v.$reset();
-      this.item = null;
+      this.localItem = null;
       this.id = "";
       this.name = "";
       this.officeId = "";
@@ -287,6 +271,7 @@ export default {
   },
 };
 </script>
+
 <style scope>
 .btn-submit {
   color: white !important;

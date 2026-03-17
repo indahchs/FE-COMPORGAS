@@ -153,18 +153,7 @@ export default {
     },
   },
   mounted() {
-    this.testing();
-    // window.addEventListener("message", function (e) {
-    //   if (e.origin !== "https://sso.pertaminagas.com/comporgas") return;
-    // });
-    // StorageConfig.saveToken(e.data.value);
-    // StorageConfig.saveData(e.data.value);
-    // window.location.href = "/home";
-    // HttpService.setHeader();
     window.addEventListener("message", this.receiveMessage);
-    // setTimeout(() => {
-    //   this.postMessage();
-    // }, 2000);
   },
   created() {
     // setTimeout(() => {

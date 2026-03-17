@@ -155,7 +155,7 @@ export default {
     async fetchInstagramData() {
       try {
         this.loadingInstagram = true;
-        const response = await serviceBanner.getBannerHome(false, {});
+        const response = await serviceBanner.getBannerHome(true, {});
 
         const { success, data: instagramData } = response.data;
 

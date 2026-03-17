@@ -276,7 +276,8 @@ export default {
       const today = moment();
       return this.upcomingEventsFromApi
         .filter(event => moment(event.eventDate).isSameOrAfter(today, 'day'))
-        .sort((a, b) => moment(a.eventDate).diff(moment(b.eventDate)));
+        .sort((a, b) => moment(a.eventDate).diff(moment(b.eventDate)))
+        .slice(0, 3);
     },
     filteredUpcomingEvents() {
       return this.upcomingEvents;
