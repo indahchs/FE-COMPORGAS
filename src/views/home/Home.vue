@@ -7,12 +7,10 @@
             <v-card-title class="pa-4 news-header">
               <v-row align="center" no-gutters>
                 <v-icon class="mr-2" color="black" size="24">
-                  {{ currentView === 'news' ? mdiNewspaper :
-                    currentView === 'instagram' ? mdiInstagram : mdiBullhorn }}
+                  {{ currentView === 'news' ? mdiNewspaper : mdiBullhorn }}
                 </v-icon>
                 <div class="text-h6 font-weight-bold">
-                  {{ currentView === 'news' ? 'News' :
-                    currentView === 'instagram' ? 'Instagram' : 'Broadcast' }}
+                  {{ currentView === 'news' ? 'News' : 'Broadcast' }}
                 </div>
                 <v-spacer></v-spacer>
 
@@ -25,10 +23,6 @@
                     :color="currentView === 'announcement' ? 'primary' : 'grey'" small>
                     <v-icon size="20">{{ mdiBullhorn }}</v-icon>
                   </v-btn>
-                  <v-btn icon @click="setView('instagram')" class="tab-btn"
-                    :color="currentView === 'instagram' ? 'primary' : 'grey'" small>
-                    <v-icon size="20">{{ mdiInstagram }}</v-icon>
-                  </v-btn>
                 </div>
               </v-row>
             </v-card-title>
@@ -36,10 +30,6 @@
             <v-card-text class="carousel-container">
               <transition name="view-transition" mode="out-in">
                 <News v-if="currentView === 'news'" key="news" />
-              </transition>
-
-              <transition name="view-transition" mode="out-in">
-                <Instagram v-if="currentView === 'instagram'" key="instagram" />
               </transition>
 
               <transition name="view-transition" mode="out-in">
@@ -63,12 +53,10 @@
 import EventModal from "./component/EventModal.vue";
 import EventCalendar from "./component/EventCalendar.vue";
 import News from "./component/News.vue";
-import Instagram from "./component/Instagram.vue";
 import Announcement from "./component/Announcement.vue";
 
 import {
   mdiNewspaper,
-  mdiInstagram,
   mdiBullhorn
 } from '@mdi/js';
 
@@ -77,13 +65,11 @@ export default {
     EventModal,
     EventCalendar,
     News,
-    Instagram,
     Announcement
   },
   data() {
     return {
       mdiNewspaper,
-      mdiInstagram,
       mdiBullhorn,
       currentView: 'news',
       openModalEvent: false,

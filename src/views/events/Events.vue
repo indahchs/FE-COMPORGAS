@@ -33,7 +33,7 @@
                   <v-col cols="12">
                     <div class="events-container">
                       <v-card v-for="(event, index) in eventData.slice(0, 8)" :key="index" class="pa-0 mb-2 event-card"
-                        depressed elevation="0" :style="{ backgroundColor: event.categoryEventColorBg }">
+                      depressed elevation="0" :style="{ borderLeft: '4px solid ' + event.categoryEventColor }">
                         <v-row align="center" class="pa-0 ma-0" no-gutters>
                           <v-col cols="3" class="date-section">
                             <div :style="{ backgroundColor: event.categoryEventColor }" class="date-container">
