@@ -43,6 +43,10 @@ export default class ItHelpDeskService extends HttpService {
 
     return this.put(param, api);
   }
+  deleteTicket(param) {
+    const api = this.api + "ithelpdesk/ticket/" + param;
+    return this.deleteV2("", api);
+  }
   deleteHelpDesk(param, data) {
     const api = this.api + "ithelpdesk/catalog/" + param;
 

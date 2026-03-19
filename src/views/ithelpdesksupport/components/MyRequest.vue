@@ -48,7 +48,14 @@
       </v-card-text>
 
       <v-card-text class="pa-0">
-        <v-data-table hide-default-footer :loading="loading" :headers="headers" :items="tickets" @click:row="viewDetail" :mobile-breakpoint="0">
+        <v-data-table
+          hide-default-footer
+          :loading="loading"
+          :headers="tableHeaders"
+          :items="tickets"
+          @click:row="viewDetail"
+          :mobile-breakpoint="0"
+        >
           <template #[`item.createdAt`]="{ item }">
             <span class="text-no-wrap">{{ formatDate(item.createdAt) }}</span>
           </template>
@@ -57,6 +64,12 @@
               <span class="status-text">{{ item.isLate && item.statusId !== 'RESOLVED' ? 'Late' : item.statusName }}</span>
               <v-icon color="white" x-small class="ml-1">{{ item.statusId === 'RESOLVED' ? icons.mdiCheckAll : icons.mdiCheck }}</v-icon>
             </v-chip>
+          </template>
+          <!-- Kolom Actions khusus SUPER -->
+          <template v-if="isSuperUser" #[`item.actions`]="{ item }">
+            <v-btn icon small @click.stop="openDeleteConfirm(item)">
+              <v-icon small color="error">{{ icons.mdiDelete }}</v-icon>
+            </v-btn>
           </template>
         </v-data-table>
       </v-card-text>
@@ -69,7 +82,41 @@
       </v-card-text>
     </v-card>
 
+    <!-- Form Modal -->
     <HelpdeskFormModal :open="showModal" :datas="modalData" @close="closeModal" />
+
+    <!-- Delete Confirmation Dialog -->
+    <v-dialog v-model="deleteDialog" max-width="400px" persistent>
+      <v-card>
+        <v-card-title class="error white--text">
+          <v-icon left color="white">{{ icons.mdiDeleteAlert }}</v-icon>
+          Konfirmasi Hapus
+          <v-spacer></v-spacer>
+          <v-btn icon dark @click="deleteDialog = false" :disabled="isDeleting">
+            <v-icon>{{ icons.mdiClose }}</v-icon>
+          </v-btn>
+        </v-card-title>
+        <v-card-text class="pt-4">
+          <p class="mb-1">Apakah kamu yakin ingin menghapus tiket ini?</p>
+          <v-chip color="primary" outlined small v-if="ticketToDelete">
+            {{ ticketToDelete.number }}
+          </v-chip>
+          <p class="mt-2 mb-0 caption grey--text">
+            <v-icon x-small color="grey">{{ icons.mdiDeleteAlert }}</v-icon>
+            Aksi ini tidak dapat dibatalkan.
+          </p>
+        </v-card-text>
+        <v-divider></v-divider>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn text @click="deleteDialog = false" :disabled="isDeleting">Batal</v-btn>
+          <v-btn color="error" @click="confirmDelete" :loading="isDeleting">
+            <v-icon left small>{{ icons.mdiDelete }}</v-icon>
+            Hapus
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -85,6 +132,7 @@ import {
   mdiTicketConfirmationOutline, mdiClipboardTextClockOutline, mdiClipboardArrowRightOutline,
   mdiClipboardAlertOutline, mdiLoading, mdiCheckDecagramOutline,
   mdiMagnify, mdiDownload, mdiPlus, mdiCheck, mdiCheckAll,
+  mdiDelete, mdiDeleteAlert, mdiClose,
 } from "@mdi/js";
 
 const svc  = ItHelpDeskService.build();
@@ -94,24 +142,43 @@ export default {
   components: { DatePicker, HelpdeskFormModal },
   data() {
     return {
-      icons: { mdiTicketConfirmationOutline, mdiClipboardTextClockOutline, mdiClipboardArrowRightOutline, mdiClipboardAlertOutline, mdiLoading, mdiCheckDecagramOutline, mdiMagnify, mdiDownload, mdiPlus, mdiCheck, mdiCheckAll },
+      icons: {
+        mdiTicketConfirmationOutline, mdiClipboardTextClockOutline, mdiClipboardArrowRightOutline,
+        mdiClipboardAlertOutline, mdiLoading, mdiCheckDecagramOutline,
+        mdiMagnify, mdiDownload, mdiPlus, mdiCheck, mdiCheckAll,
+        mdiDelete, mdiDeleteAlert, mdiClose,
+      },
       page: 1, totalPages: 1, totalItems: 0,
       loading: false, exportLoading: false,
       keyword: null, catalogId: null, startDate: null, endDate: null, status: null,
       tickets: [], catalogs: [], catalogSlaMap: {},
       allTickets: 0, assignedTickets: 0, progressTickets: 0, pendingTickets: 0, lateTickets: 0, solvedTickets: 0,
       showModal: false, modalData: {},
-      isITLead: false, canDownload: false,
+      isITLead: false, canDownload: false, isSuperUser: false,
+      // Delete state
+      deleteDialog: false, ticketToDelete: null, isDeleting: false,
       headers: [
-        { text: "Name", value: "userName" }, { text: "PIC", value: "picName" },
-        { text: "Ticket", value: "number" }, { text: "Date", value: "createdAt" },
-        { text: "Title", value: "title" },   { text: "Catalog", value: "catalogName" },
-        { text: "Location", value: "officeName" }, { text: "Status", value: "statusName" },
+        { text: "Name",     value: "userName"    },
+        { text: "PIC",      value: "picName"     },
+        { text: "Ticket",   value: "number"      },
+        { text: "Date",     value: "createdAt"   },
+        { text: "Title",    value: "title"       },
+        { text: "Catalog",  value: "catalogName" },
+        { text: "Location", value: "officeName"  },
+        { text: "Status",   value: "statusName"  },
       ],
     };
   },
 
   computed: {
+    // Kolom Actions hanya muncul untuk SUPER
+    tableHeaders() {
+      if (!this.isSuperUser) return this.headers;
+      return [
+        ...this.headers,
+        { text: "Actions", value: "actions", sortable: false, width: "80px" },
+      ];
+    },
     statusCards() {
       return [
         { title: "All",      value: this.allTickets,      class: "all",      icon: "mdiTicketConfirmationOutline",  filter: null        },
@@ -125,9 +192,10 @@ export default {
   },
 
   async created() {
-    const user = JSON.parse(localStorage.getItem("dataUser"));
+    const user       = JSON.parse(localStorage.getItem("dataUser"));
     this.isITLead    = ["IT_LEAD", "SUPER"].includes(user?.roleId);
     this.canDownload = ["IT_LEAD", "SUPER", "IT"].includes(user?.roleId);
+    this.isSuperUser = user?.roleId === "SUPER";
     await Promise.all([this.loadCatalogs(), this.loadSlaMap()]);
     this.loadTickets();
     this.loadCounts();
@@ -159,17 +227,17 @@ export default {
 
     chipClass(item) {
       if (item.isLate && item.statusId !== "RESOLVED") return "status-late";
-      return { 
-        SUBMITTED: "status-submitted", 
-        INPROGRESS: "status-progress", 
-        PENDING: "status-pending", 
-        ASSIGNED: "status-assigned", 
-        LATE: "status-late", 
-        RESOLVED: "status-solved" 
+      return {
+        SUBMITTED: "status-submitted",
+        INPROGRESS: "status-progress",
+        PENDING:   "status-pending",
+        ASSIGNED:  "status-assigned",
+        LATE:      "status-late",
+        RESOLVED:  "status-solved",
       }[item.statusId] || "";
     },
 
-    // Data 
+    // ── Data ─────────────────────────────────────────────────────────
     async loadCatalogs() {
       try {
         const res = await CatalogService.build().getAllOptions();
@@ -182,10 +250,13 @@ export default {
       this.loading = true;
       try {
         const res = await svc.getTicketPic({
-          keyword: this.keyword, catalog: this.catalogId, status: this.status,
+          keyword:   this.keyword,
+          catalog:   this.catalogId,
+          status:    this.status,
           startDate: this.startDate ? moment(this.startDate).format("YYYY-MM-DD") : null,
           endDate:   this.endDate   ? moment(this.endDate).format("YYYY-MM-DD")   : null,
-          page: this.page - 1, size: 10,
+          page:      this.page - 1,
+          size:      10,
         });
         this.tickets    = (res.data.data.content || []).map(i => ({ ...i, isLate: this.isLate(i) }));
         this.totalItems = res.data.data.totalElements || 0;
@@ -231,10 +302,12 @@ export default {
       } catch { this.lateTickets = 0; }
     },
 
-    // Aksi 
+    // ── Aksi ─────────────────────────────────────────────────────────
     filterByStatus(status) { this.status = status; this.page = 1; this.loadTickets(); },
 
-    viewDetail(ticket) { this.$router.push({ name: "ithelpdesksupport-my-request-detail", params: { id: ticket.id, ticket } }); },
+    viewDetail(ticket) {
+      this.$router.push({ name: "ithelpdesksupport-my-request-detail", params: { id: ticket.id, ticket } });
+    },
 
     closeModal(id) {
       this.showModal = false;
@@ -246,13 +319,47 @@ export default {
     async downloadExcel() {
       this.exportLoading = true;
       try {
-        const res  = await svc.export({ keyword: this.keyword, catalog: this.catalogId, status: this.status, startDate: this.startDate ? moment(this.startDate).format("YYYY-MM-DD") : null, endDate: this.endDate ? moment(this.endDate).format("YYYY-MM-DD") : null });
-        const link = document.createElement("a");
-        link.href  = window.URL.createObjectURL(new Blob([res.data]));
+        const res  = await svc.export({
+          keyword:   this.keyword,
+          catalog:   this.catalogId,
+          status:    this.status,
+          startDate: this.startDate ? moment(this.startDate).format("YYYY-MM-DD") : null,
+          endDate:   this.endDate   ? moment(this.endDate).format("YYYY-MM-DD")   : null,
+        });
+        const link    = document.createElement("a");
+        link.href     = window.URL.createObjectURL(new Blob([res.data]));
         link.download = `Ticket-${moment().format("DD-MM-YYYY")}.xlsx`;
         link.click();
       } catch (e) { console.error(e); }
       finally { this.exportLoading = false; }
+    },
+
+    // ── Delete (khusus SUPER) ────────────────────────────────────────
+    openDeleteConfirm(item) {
+      this.ticketToDelete = item;
+      this.deleteDialog   = true;
+    },
+
+    async confirmDelete() {
+      if (!this.ticketToDelete) return;
+      this.isDeleting = true;
+      try {
+        await svc.deleteTicket(this.ticketToDelete.id);
+
+        // Hapus langsung dari array tanpa full refresh
+        this.tickets    = this.tickets.filter(t => t.id !== this.ticketToDelete.id);
+        this.totalItems = Math.max(0, this.totalItems - 1);
+
+        // Update counter stat card
+        if (this.allTickets > 0) this.allTickets--;
+
+        this.deleteDialog   = false;
+        this.ticketToDelete = null;
+      } catch (e) {
+        console.error("Delete error:", e);
+      } finally {
+        this.isDeleting = false;
+      }
     },
 
     formatDate(d) { return moment(d).format("DD-MM-YYYY"); },
