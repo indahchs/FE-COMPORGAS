@@ -84,39 +84,6 @@
 
     <!-- Form Modal -->
     <HelpdeskFormModal :open="showModal" :datas="modalData" @close="closeModal" />
-
-    <!-- Delete Confirmation Dialog -->
-    <v-dialog v-model="deleteDialog" max-width="400px" persistent>
-      <v-card>
-        <v-card-title class="error white--text">
-          <v-icon left color="white">{{ icons.mdiDeleteAlert }}</v-icon>
-          Konfirmasi Hapus
-          <v-spacer></v-spacer>
-          <v-btn icon dark @click="deleteDialog = false" :disabled="isDeleting">
-            <v-icon>{{ icons.mdiClose }}</v-icon>
-          </v-btn>
-        </v-card-title>
-        <v-card-text class="pt-4">
-          <p class="mb-1">Apakah kamu yakin ingin menghapus tiket ini?</p>
-          <v-chip color="primary" outlined small v-if="ticketToDelete">
-            {{ ticketToDelete.number }}
-          </v-chip>
-          <p class="mt-2 mb-0 caption grey--text">
-            <v-icon x-small color="grey">{{ icons.mdiDeleteAlert }}</v-icon>
-            Aksi ini tidak dapat dibatalkan.
-          </p>
-        </v-card-text>
-        <v-divider></v-divider>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn text @click="deleteDialog = false" :disabled="isDeleting">Batal</v-btn>
-          <v-btn color="error" @click="confirmDelete" :loading="isDeleting">
-            <v-icon left small>{{ icons.mdiDelete }}</v-icon>
-            Hapus
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
   </div>
 </template>
 
@@ -128,6 +95,7 @@ import HelpdeskFormModal from "./HelpdeskFormModal.vue";
 import ItHelpDeskService from "@/services/ithelpdesk/itHelpDeskServices";
 import HelpdeskDashboardService from "@/services/helpdeskdashboard/helpdeskDashboardServices";
 import CatalogService from "@/services/catalog/catalogServices";
+import Swal from "sweetalert2";
 import {
   mdiTicketConfirmationOutline, mdiClipboardTextClockOutline, mdiClipboardArrowRightOutline,
   mdiClipboardAlertOutline, mdiLoading, mdiCheckDecagramOutline,
@@ -155,8 +123,7 @@ export default {
       allTickets: 0, assignedTickets: 0, progressTickets: 0, pendingTickets: 0, lateTickets: 0, solvedTickets: 0,
       showModal: false, modalData: {},
       isITLead: false, canDownload: false, isSuperUser: false,
-      // Delete state
-      deleteDialog: false, ticketToDelete: null, isDeleting: false,
+      ticketToDelete: null, isDeleting: false,
       headers: [
         { text: "Name",     value: "userName"    },
         { text: "PIC",      value: "picName"     },
@@ -171,7 +138,6 @@ export default {
   },
 
   computed: {
-    // Kolom Actions hanya muncul untuk SUPER
     tableHeaders() {
       if (!this.isSuperUser) return this.headers;
       return [
@@ -228,12 +194,12 @@ export default {
     chipClass(item) {
       if (item.isLate && item.statusId !== "RESOLVED") return "status-late";
       return {
-        SUBMITTED: "status-submitted",
+        SUBMITTED:  "status-submitted",
         INPROGRESS: "status-progress",
-        PENDING:   "status-pending",
-        ASSIGNED:  "status-assigned",
-        LATE:      "status-late",
-        RESOLVED:  "status-solved",
+        PENDING:    "status-pending",
+        ASSIGNED:   "status-assigned",
+        LATE:       "status-late",
+        RESOLVED:   "status-solved",
       }[item.statusId] || "";
     },
 
@@ -336,8 +302,27 @@ export default {
 
     // ── Delete (khusus SUPER) ────────────────────────────────────────
     openDeleteConfirm(item) {
-      this.ticketToDelete = item;
-      this.deleteDialog   = true;
+      Swal.fire({
+        icon: "warning",
+        title: "Delete",
+        text: `Are you sure you want to delete ticket ${item.number}?`,
+        showCancelButton: true,
+        buttons: {
+          cancel: false,
+          confirm: true,
+        },
+        confirmButtonText: "Yes",
+        cancelButtonText: "No",
+        closeOnEsc: false,
+        closeOnClickOutside: false,
+      }).then((result) => {
+        if (result.isConfirmed) {
+          this.ticketToDelete = item;
+          this.confirmDelete();
+        } else {
+          return false;
+        }
+      });
     },
 
     async confirmDelete() {
@@ -346,17 +331,49 @@ export default {
       try {
         await svc.deleteTicket(this.ticketToDelete.id);
 
-        // Hapus langsung dari array tanpa full refresh
         this.tickets    = this.tickets.filter(t => t.id !== this.ticketToDelete.id);
         this.totalItems = Math.max(0, this.totalItems - 1);
-
-        // Update counter stat card
         if (this.allTickets > 0) this.allTickets--;
 
-        this.deleteDialog   = false;
         this.ticketToDelete = null;
+
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: "Tiket berhasil dihapus",
+          buttons: {
+            cancel: false,
+            confirm: true,
+          },
+          confirmButtonText: "Yes",
+          cancelButtonText: "No",
+          closeOnEsc: false,
+          closeOnClickOutside: false,
+        }).then((result) => {
+          if (result) {
+            this.loading = false;
+          }
+        });
+
       } catch (e) {
         console.error("Delete error:", e);
+        Swal.fire({
+          icon: "error",
+          title: "Failed",
+          text: "Gagal menghapus tiket",
+          buttons: {
+            cancel: false,
+            confirm: true,
+          },
+          confirmButtonText: "Yes",
+          cancelButtonText: "No",
+          closeOnEsc: false,
+          closeOnClickOutside: false,
+        }).then((result) => {
+          if (result) {
+            this.loading = false;
+          }
+        });
       } finally {
         this.isDeleting = false;
       }

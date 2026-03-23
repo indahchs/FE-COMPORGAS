@@ -47,6 +47,7 @@
           </v-col>
         </v-row>
 
+        <!-- Download Progress Dialog -->
         <v-dialog v-model="downloadProgressDialog" max-width="600" persistent>
           <v-card>
             <v-card-title class="d-flex align-center">
@@ -99,6 +100,7 @@
           </v-card>
         </v-dialog>
 
+        <!-- Loading State -->
         <v-row v-if="loading" class="justify-center">
           <v-col cols="12" class="text-center">
             <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
@@ -106,6 +108,7 @@
           </v-col>
         </v-row>
 
+        <!-- Error State -->
         <v-row v-else-if="error" class="justify-center">
           <v-col cols="12" class="text-center">
             <v-alert type="error" outlined>
@@ -118,6 +121,7 @@
           </v-col>
         </v-row>
 
+        <!-- Photo Grid -->
         <v-row v-else-if="folderPhotos.length > 0">
           <v-col v-for="photo in folderPhotos" :key="photo.id" cols="6" sm="4" md="3" lg="2">
             <v-card hover class="photo-card" @click="openImagePreview(photo)">
@@ -135,6 +139,7 @@
           </v-col>
         </v-row>
 
+        <!-- Pagination -->
         <v-row v-if="totalPages > 1" class="mt-6">
           <v-col cols="12">
             <div class="d-flex justify-center align-center">
@@ -158,6 +163,7 @@
           </v-col>
         </v-row>
 
+        <!-- Empty State -->
         <v-row v-if="!loading && !error && folderPhotos.length === 0" class="justify-center">
           <v-col cols="12" class="text-center">
             <v-icon size="64" color="grey">{{ icons.mdiImageOff }}</v-icon>
@@ -170,6 +176,7 @@
         </v-row>
       </v-card>
 
+      <!-- Image Preview Dialog -->
       <v-dialog v-model="imagePreviewDialog" max-width="800" @keydown.left="showPreviousPhoto"
         @keydown.right="showNextPhoto">
         <v-card>
@@ -217,12 +224,8 @@
             </div>
           </v-card-text>
           <v-card-text v-if="selectedPhoto">
-            <div class="text-body-2"><strong>Activity Date:</strong> {{ formatDate(selectedPhoto.activityDate) || 'N/A'
-            }}
-            </div>
-            <div class="text-body-2"><strong>File Name:</strong> {{ selectedPhoto.photoName || selectedPhoto.filename ||
-              'N/A'
-            }}</div>
+            <div class="text-body-2"><strong>Activity Date:</strong> {{ formatDate(selectedPhoto.activityDate) || 'N/A' }}</div>
+            <div class="text-body-2"><strong>File Name:</strong> {{ selectedPhoto.photoName || selectedPhoto.filename || 'N/A' }}</div>
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>
@@ -230,13 +233,12 @@
               <v-icon class="mr-1">{{ icons.mdiDownload }}</v-icon>
               Download
             </v-btn>
-            <v-btn text @click="imagePreviewDialog = false">
-              Close
-            </v-btn>
+            <v-btn text @click="imagePreviewDialog = false">Close</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
 
+      <!-- Upload Dialog -->
       <v-dialog v-model="uploadDialog" max-width="600" @click:outside="closeUploadDialog" persistent>
         <v-card>
           <v-card-title>Upload Photos to {{ folderDetail.title || folderDetail.folderName || 'Folder' }}</v-card-title>
@@ -302,61 +304,12 @@
         </v-card>
       </v-dialog>
 
-      <v-dialog v-model="uploadCompletedDialog" max-width="400">
-        <v-card>
-          <v-card-text class="pt-6">
-            <v-alert :type="uploadCompletedType" prominent>
-              <div class="text-h6">{{ uploadCompletedType === 'success' ? 'Upload Berhasil!' : 'Upload Gagal!' }}</div>
-              <div class="mt-2">{{ uploadCompletedMessage }}</div>
-            </v-alert>
-          </v-card-text>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn color="primary" @click="closeUploadCompletedDialog">
-              OK
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-
-      <v-dialog v-model="deletePhotoDialog" max-width="500">
-        <v-card>
-          <v-card-title class="headline red--text">Delete Photo</v-card-title>
-          <v-card-text>
-            Are you sure you want to delete this photo? This action cannot be undone.
-          </v-card-text>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn text @click="deletePhotoDialog = false">Cancel</v-btn>
-            <v-btn color="primary" @click="deletePhoto" :loading="deletingPhoto">
-              Delete
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-
-      <v-snackbar v-model="successSnackbar" color="success" timeout="3000">
-        {{ successMessage }}
-        <template v-slot:action="{ attrs }">
-          <v-btn text v-bind="attrs" @click="successSnackbar = false">
-            Close
-          </v-btn>
-        </template>
-      </v-snackbar>
-
-      <v-snackbar v-model="errorSnackbar" color="error" timeout="5000">
-        {{ errorMessage }}
-        <template v-slot:action="{ attrs }">
-          <v-btn text v-bind="attrs" @click="errorSnackbar = false">
-            Close
-          </v-btn>
-        </template>
-      </v-snackbar>
     </v-container>
   </div>
 </template>
 
 <script>
+import Swal from 'sweetalert2'
 import {
   mdiArrowLeft,
   mdiFolder,
@@ -433,16 +386,8 @@ export default {
         currentFile: null,
         files: []
       },
-      deletePhotoDialog: false,
       photoToDelete: null,
       deletingPhoto: false,
-      uploadCompletedDialog: false,
-      uploadCompletedMessage: '',
-      uploadCompletedType: 'success',
-      successSnackbar: false,
-      successMessage: '',
-      errorSnackbar: false,
-      errorMessage: '',
       currentPhotoIndex: -1,
       currentPage: 0,
       totalPages: 0,
@@ -450,6 +395,7 @@ export default {
       pageSize: 24,
     }
   },
+
   computed: {
     folderId() {
       return this.$route.params.id
@@ -498,6 +444,7 @@ export default {
 
     await this.fetchFolderPhotos()
   },
+
   watch: {
     '$route.params.id': {
       handler(newId) {
@@ -518,6 +465,7 @@ export default {
       }
     }
   },
+
   methods: {
     async fetchFolderDetail(page = 0) {
       this.loading = true
@@ -526,20 +474,18 @@ export default {
       try {
         const photosResponse = await GalleryService.getFolderPhotos(
           this.folderId,
-          {
-            page: page,
-            size: this.pageSize
-          }
+          { page: page, size: this.pageSize }
         );
+
         if (photosResponse.data && photosResponse.data.data) {
           if (photosResponse.data.data.content) {
             this.folderPhotos = photosResponse.data.data.content.map(photo => ({
               ...photo,
               generatedFileName: photo.generatedFileName || null
             }));
-            this.currentPage = photosResponse.data.data.number || 0;
-            this.totalPages = photosResponse.data.data.totalPages || 1;
-            this.totalElements = photosResponse.data.data.totalElements || 0;
+            this.currentPage    = photosResponse.data.data.number       || 0;
+            this.totalPages     = photosResponse.data.data.totalPages   || 1;
+            this.totalElements  = photosResponse.data.data.totalElements || 0;
           } else if (Array.isArray(photosResponse.data.data)) {
             this.folderPhotos = photosResponse.data.data.map(photo => ({
               ...photo,
@@ -548,10 +494,12 @@ export default {
           } else {
             this.folderPhotos = []
           }
+
           if (photosResponse.data.data.folder) {
             this.folderDetail = photosResponse.data.data.folder
           }
         }
+
         if (!this.folderDetail.id) {
           try {
             let folderResponse
@@ -581,6 +529,7 @@ export default {
             console.warn('Could not fetch folder details:', folderError)
           }
         }
+
         if (!this.folderDetail.id) {
           this.folderDetail = {
             id: this.folderId,
@@ -588,6 +537,7 @@ export default {
             photoCount: this.folderPhotos.length
           }
         }
+
         this.folderDetail.photoCount = this.folderPhotos.length
 
       } catch (error) {
@@ -647,8 +597,9 @@ export default {
     },
 
     openImagePreview(photo) {
-      this.selectedPhoto = photo
-      this.imagePreviewDialog = true
+      this.selectedPhoto = photo;
+      this.currentPhotoIndex = this.folderPhotos.findIndex(p => p.id === photo.id);
+      this.imagePreviewDialog = true;
     },
 
     async downloadPhoto() {
@@ -664,22 +615,21 @@ export default {
         if (!response.ok) throw new Error('Failed to fetch photo')
 
         const blob = await response.blob()
-        const url = window.URL.createObjectURL(blob)
+        const url  = window.URL.createObjectURL(blob)
 
-        const link = document.createElement('a')
-        link.href = url
+        const link    = document.createElement('a')
+        link.href     = url
         link.download = fileName
-
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
         window.URL.revokeObjectURL(url)
 
-        this.showSuccess('Photo downloaded successfully!')
+        this.showSuccess('Foto berhasil didownload!')
 
       } catch (error) {
         console.error('Error downloading photo:', error)
-        this.showError('Failed to download photo. Please try again.')
+        this.showError('Gagal mendownload foto. Silakan coba lagi.')
       } finally {
         this.downloadingPhoto = false
       }
@@ -687,30 +637,29 @@ export default {
 
     async downloadAllPhotos() {
       if (this.folderPhotos.length === 0) {
-        this.showError('No photos to download')
+        this.showError('Tidak ada foto untuk didownload.')
         return
       }
 
-      this.downloadingAll = true
+      this.downloadingAll    = true
       this.downloadCancelled = false
       this.initializeDownloadProgress()
       this.downloadProgressDialog = true
 
-      const failedDownloads = []
+      const failedDownloads     = []
       const successfulDownloads = []
 
       try {
         const JSZip = (await import('jszip')).default
-
-        const zip = new JSZip()
+        const zip   = new JSZip()
         const folderName = this.sanitizeFileName(this.folderDetail.title || this.folderDetail.folderName || 'Photos')
 
         for (let i = 0; i < this.folderPhotos.length; i++) {
           if (this.downloadCancelled) break
 
           const photo = this.folderPhotos[i]
-          this.downloadProgress.currentPhoto = photo
-          this.downloadProgress.files[i].status = 'downloading'
+          this.downloadProgress.currentPhoto      = photo
+          this.downloadProgress.files[i].status   = 'downloading'
 
           try {
             const photoUrl = this.getPhotoUrl(photo)
@@ -718,12 +667,11 @@ export default {
 
             if (!response.ok) throw new Error(`Failed to fetch ${photo.photoName || photo.filename}`)
 
-            const blob = await response.blob()
-
+            const blob             = await response.blob()
             const originalFileName = photo.generatedFileName || photo.photoName || photo.filename || `photo_${i + 1}`
-            const fileExtension = this.getFileExtension(blob.type, originalFileName)
-            const baseFileName = this.sanitizeFileName(this.removeExtension(originalFileName))
-            const fullFileName = `${baseFileName}${fileExtension}`
+            const fileExtension    = this.getFileExtension(blob.type, originalFileName)
+            const baseFileName     = this.sanitizeFileName(this.removeExtension(originalFileName))
+            const fullFileName     = `${baseFileName}${fileExtension}`
 
             zip.file(`${folderName}/${fullFileName}`, blob)
 
@@ -734,15 +682,11 @@ export default {
             console.error(`Error downloading ${photo.photoName || photo.filename}:`, error)
             this.downloadProgress.files[i].status = 'failed'
             this.downloadProgress.failed++
-            failedDownloads.push({
-              name: photo.photoName || photo.filename,
-              error: error.message
-            })
+            failedDownloads.push({ name: photo.photoName || photo.filename, error: error.message })
           }
 
           this.downloadProgress.current = i + 1
           this.updateDownloadProgress()
-
           await new Promise(resolve => setTimeout(resolve, 100))
         }
 
@@ -754,54 +698,49 @@ export default {
           })
 
           const properZipBlob = new Blob([zipBlob], { type: 'application/zip' })
-          const url = window.URL.createObjectURL(properZipBlob)
+          const url           = window.URL.createObjectURL(properZipBlob)
 
-          const link = document.createElement('a')
-          link.href = url
-          link.download = `${folderName}.zip`
+          const link      = document.createElement('a')
+          link.href       = url
+          link.download   = `${folderName}.zip`
           link.style.display = 'none'
-
           document.body.appendChild(link)
           link.click()
           document.body.removeChild(link)
-
-          setTimeout(() => {
-            window.URL.revokeObjectURL(url)
-          }, 1000)
+          setTimeout(() => { window.URL.revokeObjectURL(url) }, 1000)
 
           if (failedDownloads.length === 0) {
-            this.showSuccess(`All ${successfulDownloads.length} photos downloaded successfully as ${folderName}.zip!`)
+            this.showSuccess(`${successfulDownloads.length} foto berhasil didownload sebagai ${folderName}.zip!`)
           } else {
-            this.showSuccess(`${successfulDownloads.length} photos downloaded successfully, ${failedDownloads.length} failed. Check ${folderName}.zip in your downloads.`)
+            this.showSuccess(`${successfulDownloads.length} foto berhasil, ${failedDownloads.length} gagal. Cek ${folderName}.zip di folder unduhan.`)
           }
         } else if (this.downloadCancelled) {
-          this.showError('Download cancelled by user')
+          this.showError('Download dibatalkan.')
         } else if (successfulDownloads.length === 0 && failedDownloads.length > 0) {
-          this.showError('All downloads failed. Please check your connection and try again.')
+          this.showError('Semua download gagal. Periksa koneksi dan coba lagi.')
         }
 
       } catch (error) {
         console.error('Error in bulk download process:', error)
-        this.showError('Failed to create download package: ' + error.message)
+        this.showError('Gagal membuat paket download: ' + error.message)
       } finally {
-        this.downloadingAll = false
+        this.downloadingAll                = false
         this.downloadProgress.currentPhoto = null
-        this.downloadCancelled = false
-
+        this.downloadCancelled             = false
         this.$forceUpdate()
       }
     },
 
     initializeDownloadProgress() {
       this.downloadProgress = {
-        current: 0,
-        total: this.folderPhotos.length,
-        percentage: 0,
-        completed: 0,
-        failed: 0,
+        current:      0,
+        total:        this.folderPhotos.length,
+        percentage:   0,
+        completed:    0,
+        failed:       0,
         currentPhoto: null,
         files: this.folderPhotos.map(photo => ({
-          name: photo.photoName || photo.filename || 'Unknown',
+          name:   photo.photoName || photo.filename || 'Unknown',
           status: 'pending'
         }))
       }
@@ -814,29 +753,22 @@ export default {
     },
 
     closeDownloadDialog() {
-      this.downloadProgressDialog = false
-      this.downloadingAll = false
-      this.downloadCancelled = false
+      this.downloadProgressDialog    = false
+      this.downloadingAll            = false
+      this.downloadCancelled         = false
       this.downloadProgress.currentPhoto = null
-
       this.downloadProgress = {
-        current: 0,
-        total: 0,
-        percentage: 0,
-        completed: 0,
-        failed: 0,
-        currentPhoto: null,
-        files: []
+        current: 0, total: 0, percentage: 0,
+        completed: 0, failed: 0, currentPhoto: null, files: []
       }
     },
 
     cancelDownload() {
       if (this.downloadingAll && this.downloadProgress.completed + this.downloadProgress.failed < this.downloadProgress.total) {
         this.downloadCancelled = true
-        this.downloadingAll = false
-        this.showError('Download cancelled')
+        this.downloadingAll    = false
+        this.showError('Download dibatalkan.')
       }
-
       this.closeDownloadDialog()
     },
 
@@ -851,19 +783,11 @@ export default {
           return '.' + extension
         }
       }
-
       const mimeToExtension = {
-        'image/jpeg': '.jpg',
-        'image/jpg': '.jpg',
-        'image/png': '.png',
-        'image/gif': '.gif',
-        'image/bmp': '.bmp',
-        'image/webp': '.webp',
-        'image/svg+xml': '.svg',
-        'image/tiff': '.tiff',
-        'image/tif': '.tiff'
+        'image/jpeg': '.jpg', 'image/jpg': '.jpg', 'image/png': '.png',
+        'image/gif': '.gif', 'image/bmp': '.bmp', 'image/webp': '.webp',
+        'image/svg+xml': '.svg', 'image/tiff': '.tiff', 'image/tif': '.tiff'
       }
-
       return mimeToExtension[mimeType] || '.jpg'
     },
 
@@ -874,63 +798,43 @@ export default {
 
     getDownloadStatusClass(status) {
       switch (status) {
-        case 'downloading':
-          return 'blue lighten-5'
-        case 'completed':
-          return 'green lighten-5'
-        case 'failed':
-          return 'red lighten-5'
-        default:
-          return 'grey lighten-4'
+        case 'downloading': return 'blue lighten-5'
+        case 'completed':   return 'green lighten-5'
+        case 'failed':      return 'red lighten-5'
+        default:            return 'grey lighten-4'
       }
     },
 
     getDownloadStatusColor(status) {
       switch (status) {
-        case 'downloading':
-          return 'blue'
-        case 'completed':
-          return 'green'
-        case 'failed':
-          return 'red'
-        default:
-          return 'grey'
+        case 'downloading': return 'blue'
+        case 'completed':   return 'green'
+        case 'failed':      return 'red'
+        default:            return 'grey'
       }
     },
 
     getDownloadStatusIcon(status) {
       switch (status) {
-        case 'downloading':
-          return this.icons.mdiLoading
-        case 'completed':
-          return this.icons.mdiCheck
-        case 'failed':
-          return this.icons.mdiAlertCircle
-        default:
-          return this.icons.mdiDownload
+        case 'downloading': return this.icons.mdiLoading
+        case 'completed':   return this.icons.mdiCheck
+        case 'failed':      return this.icons.mdiAlertCircle
+        default:            return this.icons.mdiDownload
       }
     },
 
     getDownloadStatusText(status) {
       switch (status) {
-        case 'downloading':
-          return 'Downloading...'
-        case 'completed':
-          return 'Completed'
-        case 'failed':
-          return 'Failed'
-        default:
-          return 'Pending'
+        case 'downloading': return 'Downloading...'
+        case 'completed':   return 'Completed'
+        case 'failed':      return 'Failed'
+        default:            return 'Pending'
       }
     },
 
     openUploadDialog() {
-      this.errorSnackbar = false
-      this.errorMessage = ''
-
       this.uploadDialog = true
       this.resetUploadForm()
-
       this.$nextTick(() => {
         if (this.$refs.uploadForm) {
           this.$refs.uploadForm.resetValidation()
@@ -939,108 +843,79 @@ export default {
     },
 
     closeUploadDialog() {
-      if (this.uploading) {
-        return
-      }
-
+      if (this.uploading) return
       this.uploadDialog = false
-      this.errorSnackbar = false
-      this.errorMessage = ''
-
       this.resetUploadForm()
       this.resetUploadProgress()
     },
 
     resetUploadForm() {
-      this.uploadData = {
-        activityDate: new Date().toISOString().substr(0, 10)
-      }
+      this.uploadData    = { activityDate: new Date().toISOString().substr(0, 10) }
       this.selectedFiles = []
     },
 
     resetUploadProgress() {
       this.uploadProgress = {
-        current: 0,
-        total: 0,
-        percentage: 0,
-        completed: 0,
-        failed: 0,
-        currentFile: null,
-        files: []
+        current: 0, total: 0, percentage: 0,
+        completed: 0, failed: 0, currentFile: null, files: []
       }
     },
 
     initializeUploadProgress() {
       this.uploadProgress = {
-        current: 0,
-        total: this.selectedFiles.length,
-        percentage: 0,
-        completed: 0,
-        failed: 0,
+        current:     0,
+        total:       this.selectedFiles.length,
+        percentage:  0,
+        completed:   0,
+        failed:      0,
         currentFile: null,
         files: this.selectedFiles.map(file => ({
-          name: file.name,
-          size: file.size,
+          name:   file.name,
+          size:   file.size,
           status: 'pending'
         }))
       }
     },
 
     updateUploadProgress() {
-      const total = this.uploadProgress.total
+      const total   = this.uploadProgress.total
       const current = this.uploadProgress.current
       this.uploadProgress.percentage = total > 0 ? Math.round((current / total) * 100) : 0
     },
 
     getFileUploadStatusClass(status) {
       switch (status) {
-        case 'uploading':
-          return 'blue lighten-5'
-        case 'completed':
-          return 'green lighten-5'
-        case 'failed':
-          return 'red lighten-5'
-        default:
-          return 'grey lighten-4'
+        case 'uploading': return 'blue lighten-5'
+        case 'completed': return 'green lighten-5'
+        case 'failed':    return 'red lighten-5'
+        default:          return 'grey lighten-4'
       }
     },
 
     getFileUploadStatusColor(status) {
       switch (status) {
-        case 'uploading':
-          return 'blue'
-        case 'completed':
-          return 'green'
-        case 'failed':
-          return 'red'
-        default:
-          return 'grey'
+        case 'uploading': return 'blue'
+        case 'completed': return 'green'
+        case 'failed':    return 'red'
+        default:          return 'grey'
       }
     },
 
     getFileUploadStatusIcon(status) {
       switch (status) {
-        case 'uploading':
-          return this.icons.mdiLoading
-        case 'completed':
-          return this.icons.mdiCheck
-        case 'failed':
-          return this.icons.mdiAlertCircle
-        default:
-          return this.icons.mdiCamera
+        case 'uploading': return this.icons.mdiLoading
+        case 'completed': return this.icons.mdiCheck
+        case 'failed':    return this.icons.mdiAlertCircle
+        default:          return this.icons.mdiCamera
       }
     },
 
     getFileUploadStatusText(status) {
       switch (status) {
-        case 'uploading':
-          return 'Uploading...'
-        case 'completed':
-          return 'Completed'
-        case 'failed':
-          return 'Failed'
-        default:
-          return 'Pending'
+        case 'uploading': return 'Uploading...'
+        case 'completed': return 'Completed'
+        case 'failed':    return 'Failed'
+        default:          return 'Pending'
       }
     },
 
@@ -1048,27 +923,24 @@ export default {
       if (!this.$refs.uploadForm.validate()) return
 
       this.uploading = true
-      this.errorSnackbar = false
-      this.errorMessage = ''
-
       this.initializeUploadProgress()
 
-      const failedUploads = []
+      const failedUploads     = []
       const successfulUploads = []
 
       try {
         for (let i = 0; i < this.selectedFiles.length; i++) {
           const file = this.selectedFiles[i]
 
-          this.uploadProgress.currentFile = file
-          this.uploadProgress.files[i].status = 'uploading'
+          this.uploadProgress.currentFile       = file
+          this.uploadProgress.files[i].status   = 'uploading'
 
           try {
             const formData = new FormData()
-            formData.append('photoName', file.name || 'Untitled Photo')
+            formData.append('photoName',    file.name || 'Untitled Photo')
             formData.append('activityDate', this.uploadData.activityDate)
-            formData.append('folderId', this.folderId)
-            formData.append('file', file)
+            formData.append('folderId',     this.folderId)
+            formData.append('file',         file)
 
             await GalleryService.uploadPhoto(formData)
 
@@ -1077,99 +949,211 @@ export default {
             successfulUploads.push(file.name)
           } catch (error) {
             console.error(`Error uploading file ${file.name}:`, error)
-
             this.uploadProgress.files[i].status = 'failed'
             this.uploadProgress.failed++
-            failedUploads.push({
-              name: file.name,
-              error: error.message || 'Unknown error'
-            })
+            failedUploads.push({ name: file.name, error: error.message || 'Unknown error' })
           }
 
           this.uploadProgress.current = i + 1
           this.updateUploadProgress()
-
           await new Promise(resolve => setTimeout(resolve, 200))
         }
 
-        if (successfulUploads.length > 0) {
-          this.uploadCompletedMessage = `${successfulUploads.length} foto berhasil diupload!`
-          this.uploadCompletedType = 'success'
-          this.uploadCompletedDialog = true
-        }
-
-        if (failedUploads.length > 0) {
-          const errorMsg = `${failedUploads.length} foto gagal diupload: ${failedUploads.map(f => f.name).join(', ')}`
-          this.uploadCompletedMessage = errorMsg
-          this.uploadCompletedType = 'error'
-          this.uploadCompletedDialog = true
+        if (successfulUploads.length > 0 && failedUploads.length === 0) {
+          Swal.fire({
+            icon: "success",
+            title: "Success",
+            text: `${successfulUploads.length} foto berhasil diupload.`,
+            buttons: {
+              cancel: false,
+              confirm: true,
+            },
+            confirmButtonText: "Yes",
+            cancelButtonText: "No",
+            closeOnEsc: false,
+            closeOnClickOutside: false,
+          }).then((result) => {
+            if (result) {
+              this.uploadDialog = false
+              this.resetUploadForm()
+              this.resetUploadProgress()
+              this.fetchFolderPhotos()
+            }
+          })
+        } else if (failedUploads.length > 0 && successfulUploads.length === 0) {
+          Swal.fire({
+            icon: "error",
+            title: "Failed",
+            text: `${failedUploads.length} foto gagal diupload: ${failedUploads.map(f => f.name).join(', ')}`,
+            buttons: {
+              cancel: false,
+              confirm: true,
+            },
+            confirmButtonText: "Yes",
+            cancelButtonText: "No",
+            closeOnEsc: false,
+            closeOnClickOutside: false,
+          })
+        } else if (successfulUploads.length > 0 && failedUploads.length > 0) {
+          Swal.fire({
+            icon: "success",
+            title: "Success",
+            text: `${successfulUploads.length} foto berhasil diupload, ${failedUploads.length} gagal.`,
+            buttons: {
+              cancel: false,
+              confirm: true,
+            },
+            confirmButtonText: "Yes",
+            cancelButtonText: "No",
+            closeOnEsc: false,
+            closeOnClickOutside: false,
+          }).then((result) => {
+            if (result) {
+              this.uploadDialog = false
+              this.resetUploadForm()
+              this.resetUploadProgress()
+              this.fetchFolderPhotos()
+            }
+          })
         }
 
       } catch (error) {
         console.error('Error in upload process:', error)
-        this.showError('Upload process failed')
+        Swal.fire({
+          icon: "error",
+          title: "Failed",
+          text: "Proses upload gagal.",
+          buttons: {
+            cancel: false,
+            confirm: true,
+          },
+          confirmButtonText: "Yes",
+          cancelButtonText: "No",
+          closeOnEsc: false,
+          closeOnClickOutside: false,
+        })
       } finally {
-        this.uploading = false
-        this.uploadProgress.currentFile = null
+        this.uploading                    = false
+        this.uploadProgress.currentFile   = null
       }
     },
 
     confirmDeletePhoto(photo) {
-      this.photoToDelete = photo
-      this.deletePhotoDialog = true
+      Swal.fire({
+        icon: "warning",
+        title: "Delete",
+        text: "Are you sure you want to delete this photo?",
+        showCancelButton: true,
+        buttons: {
+          cancel: false,
+          confirm: true,
+        },
+        confirmButtonText: "Yes",
+        cancelButtonText: "No",
+        closeOnEsc: false,
+        closeOnClickOutside: false,
+      }).then((result) => {
+        if (result.isConfirmed) {
+          this.photoToDelete = photo
+          this.deletePhoto()
+        } else {
+          return false
+        }
+      })
     },
 
     async deletePhoto() {
       if (!this.photoToDelete) return
 
       this.deletingPhoto = true
-
       try {
         await GalleryService.deletePhoto(this.photoToDelete.id)
-        this.showSuccess('Photo deleted successfully')
-        this.deletePhotoDialog = false
-        const photoIndex = this.folderPhotos.findIndex(photo => photo.id === this.photoToDelete.id)
+
+        const photoIndex = this.folderPhotos.findIndex(p => p.id === this.photoToDelete.id)
         if (photoIndex !== -1) {
           this.folderPhotos.splice(photoIndex, 1)
           this.folderDetail.photoCount = this.folderPhotos.length
         }
 
+        this.photoToDelete = null
+
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: "Photo deleted successfully",
+          buttons: {
+            cancel: false,
+            confirm: true,
+          },
+          confirmButtonText: "Yes",
+          cancelButtonText: "No",
+          closeOnEsc: false,
+          closeOnClickOutside: false,
+        }).then((result) => {
+          if (result) {
+            this.loading = false
+          }
+        })
       } catch (error) {
         console.error('Error deleting photo:', error)
-        this.showError('Failed to delete photo')
+        Swal.fire({
+          icon: "error",
+          title: "Failed",
+          text: "Failed to delete photo",
+          buttons: {
+            cancel: false,
+            confirm: true,
+          },
+          confirmButtonText: "Yes",
+          cancelButtonText: "No",
+          closeOnEsc: false,
+          closeOnClickOutside: false,
+        }).then((result) => {
+          if (result) {
+            this.loading = false
+          }
+        })
       } finally {
         this.deletingPhoto = false
       }
     },
 
-    closeUploadCompletedDialog() {
-      this.uploadCompletedDialog = false
-      if (this.uploadCompletedType === 'success') {
-        this.uploadDialog = false
-        window.location.reload()
-      }
-    },
-
     showSuccess(message) {
-      this.successMessage = message
-      this.successSnackbar = true
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: message,
+        buttons: {
+          cancel: false,
+          confirm: true,
+        },
+        confirmButtonText: "Yes",
+        cancelButtonText: "No",
+        closeOnEsc: false,
+        closeOnClickOutside: false,
+      })
     },
 
     showError(message) {
-      this.errorMessage = message
-      this.errorSnackbar = true
-    },
-
-    openImagePreview(photo) {
-      this.selectedPhoto = photo;
-      this.currentPhotoIndex = this.folderPhotos.findIndex(p => p.id === photo.id);
-      this.imagePreviewDialog = true;
+      Swal.fire({
+        icon: "error",
+        title: "Failed",
+        text: message,
+        buttons: {
+          cancel: false,
+          confirm: true,
+        },
+        confirmButtonText: "Yes",
+        cancelButtonText: "No",
+        closeOnEsc: false,
+        closeOnClickOutside: false,
+      })
     },
 
     showPreviousPhoto() {
       if (this.hasPreviousPhoto) {
         this.currentPhotoIndex--;
-        this.selectedPhoto = this.folderPhotos[this.currentPhotoIndex];
+        this.selectedPhoto    = this.folderPhotos[this.currentPhotoIndex];
         this.downloadingPhoto = false;
       }
     },
@@ -1177,15 +1161,15 @@ export default {
     showNextPhoto() {
       if (this.hasNextPhoto) {
         this.currentPhotoIndex++;
-        this.selectedPhoto = this.folderPhotos[this.currentPhotoIndex];
+        this.selectedPhoto    = this.folderPhotos[this.currentPhotoIndex];
         this.downloadingPhoto = false;
       }
     },
 
     handleImageClick(event) {
-      const rect = event.currentTarget.getBoundingClientRect();
+      const rect   = event.currentTarget.getBoundingClientRect();
       const clickX = event.clientX - rect.left;
-      const width = rect.width;
+      const width  = rect.width;
 
       if (clickX < width / 3) {
         this.showPreviousPhoto();
@@ -1204,7 +1188,6 @@ export default {
 
     handleKeydown(event) {
       if (!this.imagePreviewDialog) return;
-
       switch (event.key) {
         case 'ArrowLeft':
           event.preventDefault();
@@ -1287,13 +1270,8 @@ export default {
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
+  0%   { transform: rotate(0deg);   }
+  100% { transform: rotate(360deg); }
 }
 
 .upload-files-list .v-icon.mdi-loading,
@@ -1318,13 +1296,8 @@ export default {
   transform: translateY(-50%) scale(1.1);
 }
 
-.navigation-arrow--left {
-  left: 16px;
-}
-
-.navigation-arrow--right {
-  right: 16px;
-}
+.navigation-arrow--left  { left: 16px;  }
+.navigation-arrow--right { right: 16px; }
 
 .navigation-arrow--disabled {
   opacity: 0.5;
@@ -1345,9 +1318,7 @@ export default {
   z-index: 5;
 }
 
-.position-relative {
-  position: relative;
-}
+.position-relative { position: relative; }
 
 @media (max-width: 768px) {
   .navigation-arrow {
@@ -1355,26 +1326,20 @@ export default {
     height: 44px;
   }
 
-  .v-img {
-    cursor: pointer;
-  }
+  .v-img { cursor: pointer; }
 
   .navigation-arrow--left::before {
     content: '';
     position: absolute;
-    left: -20px;
-    top: -20px;
-    width: 60px;
-    height: 80px;
+    left: -20px; top: -20px;
+    width: 60px; height: 80px;
   }
 
   .navigation-arrow--right::before {
     content: '';
     position: absolute;
-    right: -20px;
-    top: -20px;
-    width: 60px;
-    height: 80px;
+    right: -20px; top: -20px;
+    width: 60px; height: 80px;
   }
 }
 </style>

@@ -2,41 +2,6 @@ import Vue from "vue";
 import VueRouter from "vue-router";
 import StorageConfig from "../services/config/StorageConfig";
 
-// Eager loading - semua komponen diimport langsung di awal
-import Dashboard from "@/views/dashboard/Dashboard.vue";
-import Home from "@/views/home/Home.vue";
-import Application from "@/views/application/Application.vue";
-import Events from "@/views/events/Events.vue";
-import EventRequest from "@/views/events/components/EventRequest.vue";
-import Meetings from "@/views/meetings/Meetings.vue";
-import ItHelpdesk from "@/views/ithelpdesk/ItHelpdesk.vue";
-import ItHelpdeskCatalog from "@/views/ithelpdesk/components/Catalog.vue";
-import ItHelpdeskMyRequest from "@/views/ithelpdesk/components/MyRequest.vue";
-import ItHelpdeskTicketDetail from "@/views/ithelpdesk/components/TicketDetail.vue";
-import ItHelpdeskFaq from "@/views/ithelpdesk/components/Faq.vue";
-import ItHelpdeskSupport from "@/views/ithelpdesksupport/ItHelpdeskSupport.vue";
-import ItHelpdeskSupportMyRequest from "@/views/ithelpdesksupport/components/MyRequest.vue";
-import ItHelpdeskSupportTicketDetail from "@/views/ithelpdesksupport/components/TicketDetail.vue";
-import ItHelpdeskSupportResume from "@/views/ithelpdesksupport/components/Resume.vue";
-import ItHelpdeskSupportCatalog from "@/views/ithelpdesksupport/components/Catalog.vue";
-import ItHelpdeskSupportFaq from "@/views/ithelpdesksupport/components/Faq.vue";
-import Notification from "@/views/notification/Notification.vue";
-import MeetingUserBooking from "@/views/meetings/MeetingUserBooking.vue";
-import ManagementSetting from "@/views/setting/ManagementSetting.vue";
-import Chart from "@/views/charts/Chart.vue";
-import Typography from "@/views/typography/Typography.vue";
-import Icons from "@/views/icons/Icons.vue";
-import Card from "@/views/cards/Card.vue";
-import SimpleTable from "@/views/tables/SimpleTable.vue";
-import FormLayouts from "@/views/forms/FormLayouts.vue";
-import AccountSettings from "@/views/pages/account-settings/AccountSettings.vue";
-import Gallery from "@/views/gallery/Gallery.vue";
-import FolderDetail from "@/views/gallery/FolderDetail.vue";
-import Login from "@/views/pages/Login.vue";
-import LoginAdmin from "@/views/pages/Login-Admin.vue";
-import Register from "@/views/pages/Register.vue";
-import Error from "@/views/Error.vue";
-
 Vue.use(VueRouter);
 
 const routes = [
@@ -47,7 +12,7 @@ const routes = [
   {
     path: "/dashboard",
     name: "dashboard",
-    component: Dashboard,
+    component: () => import("@/views/dashboard/Dashboard.vue"),
     meta: {
       reqAuth: true,
       removeMerchantId: true,
@@ -57,7 +22,7 @@ const routes = [
   {
     path: "/home",
     name: "home",
-    component: Home,
+    component: () => import("@/views/home/Home.vue"),
     meta: {
       reqAuth: true,
     },
@@ -65,7 +30,7 @@ const routes = [
   {
     path: "/application",
     name: "application",
-    component: Application,
+    component: () => import("@/views/application/Application.vue"),
     meta: {
       reqAuth: true,
     },
@@ -73,7 +38,7 @@ const routes = [
   {
     path: "/events",
     name: "events",
-    component: Events,
+    component: () => import("@/views/events/Events.vue"),
     meta: {
       reqAuth: true,
     },
@@ -81,7 +46,7 @@ const routes = [
   {
     path: "/events-request",
     name: "events-request",
-    component: EventRequest,
+    component: () => import("@/views/events/components/EventRequest.vue"),
     meta: {
       reqAuth: true,
     },
@@ -89,7 +54,7 @@ const routes = [
   {
     path: "/meetings",
     name: "meetings",
-    component: Meetings,
+    component: () => import("@/views/meetings/Meetings.vue"),
     meta: {
       reqAuth: true,
     },
@@ -97,19 +62,19 @@ const routes = [
   {
     path: "/ithelpdesk",
     name: "ithelpdesk",
-    component: ItHelpdesk,
+    component: () => import("@/views/ithelpdesk/ItHelpdesk.vue"),
     meta: {
       reqAuth: true,
     },
     children: [
       {
         path: "",
-        redirect: "catalog",
+        redirect: "catalog"
       },
       {
         path: "catalog",
         name: "ithelpdesk-catalog",
-        component: ItHelpdeskCatalog,
+        component: () => import("@/views/ithelpdesk/components/Catalog.vue"),
         meta: {
           reqAuth: true,
         },
@@ -117,7 +82,7 @@ const routes = [
       {
         path: "my-request",
         name: "ithelpdesk-my-request",
-        component: ItHelpdeskMyRequest,
+        component: () => import("@/views/ithelpdesk/components/MyRequest.vue"),
         meta: {
           reqAuth: true,
         },
@@ -125,7 +90,7 @@ const routes = [
       {
         path: "my-request/:id",
         name: "ithelpdesk-my-request-detail",
-        component: ItHelpdeskTicketDetail,
+        component: () => import("@/views/ithelpdesk/components/TicketDetail.vue"),
         meta: {
           reqAuth: true,
         },
@@ -133,7 +98,7 @@ const routes = [
       {
         path: "faq",
         name: "ithelpdesk-faq",
-        component: ItHelpdeskFaq,
+        component: () => import("@/views/ithelpdesk/components/Faq.vue"),
         meta: {
           reqAuth: true,
         },
@@ -143,19 +108,19 @@ const routes = [
   {
     path: "/ithelpdesksupport",
     name: "ithelpdesksupport",
-    component: ItHelpdeskSupport,
+    component: () => import("@/views/ithelpdesksupport/ItHelpdeskSupport.vue"),
     meta: {
       reqAuth: true,
     },
     children: [
       {
         path: "",
-        redirect: "my-request",
+        redirect: "my-request"
       },
       {
         path: "my-request",
         name: "ithelpdesksupport-my-request",
-        component: ItHelpdeskSupportMyRequest,
+        component: () => import("@/views/ithelpdesksupport/components/MyRequest.vue"),
         meta: {
           reqAuth: true,
         },
@@ -163,7 +128,7 @@ const routes = [
       {
         path: "my-request/:id",
         name: "ithelpdesk-my-request-detail",
-        component: ItHelpdeskSupportTicketDetail,
+        component: () => import("@/views/ithelpdesksupport/components/TicketDetail.vue"),
         meta: {
           reqAuth: true,
         },
@@ -171,7 +136,7 @@ const routes = [
       {
         path: "my-request/:id",
         name: "ithelpdesksupport-my-request-detail",
-        component: ItHelpdeskSupportTicketDetail,
+        component: () => import("@/views/ithelpdesksupport/components/TicketDetail.vue"),
         meta: {
           reqAuth: true,
         },
@@ -179,7 +144,7 @@ const routes = [
       {
         path: "request",
         name: "ithelpdesksupport-request",
-        component: ItHelpdeskSupportResume,
+        component: () => import("@/views/ithelpdesksupport/components/Resume.vue"),
         meta: {
           reqAuth: true,
         },
@@ -187,7 +152,7 @@ const routes = [
       {
         path: "catalog",
         name: "ithelpdesksupport-catalog",
-        component: ItHelpdeskSupportCatalog,
+        component: () => import("@/views/ithelpdesksupport/components/Catalog.vue"),
         meta: {
           reqAuth: true,
         },
@@ -195,7 +160,7 @@ const routes = [
       {
         path: "faq",
         name: "ithelpdesksupport-faq",
-        component: ItHelpdeskSupportFaq,
+        component: () => import("@/views/ithelpdesksupport/components/Faq.vue"),
         meta: {
           reqAuth: true,
         },
@@ -205,7 +170,7 @@ const routes = [
   {
     path: "/notification",
     name: "notification",
-    component: Notification,
+    component: () => import("@/views/notification/Notification.vue"),
     meta: {
       reqAuth: true,
     },
@@ -213,7 +178,7 @@ const routes = [
   {
     path: "/meeting-booking",
     name: "meeting-booking",
-    component: MeetingUserBooking,
+    component: () => import("@/views/meetings/MeetingUserBooking.vue"),
     meta: {
       reqAuth: true,
     },
@@ -221,7 +186,7 @@ const routes = [
   {
     path: "/setting",
     name: "setting",
-    component: ManagementSetting,
+    component: () => import("@/views/setting/ManagementSetting.vue"),
     meta: {
       reqAuth: true,
     },
@@ -229,52 +194,55 @@ const routes = [
   {
     path: "/charts",
     name: "charts",
-    component: Chart,
+    component: () => import("@/views/charts/Chart.vue"),
   },
   {
     path: "/typography",
     name: "typography",
-    component: Typography,
+    component: () => import("@/views/typography/Typography.vue"),
   },
   {
     path: "/icons",
     name: "icons",
-    component: Icons,
+    component: () => import("@/views/icons/Icons.vue"),
   },
   {
     path: "/cards",
     name: "cards",
-    component: Card,
+    component: () => import("@/views/cards/Card.vue"),
   },
   {
     path: "/tables",
     name: "tables",
-    component: SimpleTable,
+    component: () => import("@/views/tables/SimpleTable.vue"),
   },
   {
     path: "/forms",
     name: "forms",
-    component: FormLayouts,
+    component: () => import("@/views/forms/FormLayouts.vue"),
   },
   {
     path: "settings",
     name: "settings",
-    component: AccountSettings,
+    component: () =>
+      import("@/views/pages/account-settings/AccountSettings.vue"),
   },
   {
     path: "/gallery",
     name: "gallery",
-    component: Gallery,
+    component: () =>
+      import("@/views/gallery/Gallery.vue"),
   },
   {
     path: "/gallery/:id",
     name: "FolderDetail",
-    component: FolderDetail,
+    component: () =>
+      import("@/views/gallery/FolderDetail.vue"),
   },
   {
     path: "/login",
     name: "login",
-    component: Login,
+    component: () => import("@/views/pages/Login.vue"),
     meta: {
       layout: "blank",
       reqLogout: true,
@@ -285,7 +253,7 @@ const routes = [
   {
     path: "/login-admin",
     name: "login-admin",
-    component: LoginAdmin,
+    component: () => import("@/views/pages/Login-Admin.vue"),
     meta: {
       layout: "blank",
       reqLogout: true,
@@ -296,7 +264,7 @@ const routes = [
   {
     path: "/register",
     name: "register",
-    component: Register,
+    component: () => import("@/views/pages/Register.vue"),
     meta: {
       layout: "blank",
     },
@@ -304,7 +272,7 @@ const routes = [
   {
     path: "/notfound",
     name: "notfound",
-    component: Error,
+    component: () => import("@/views/Error.vue"),
     meta: {
       layout: "blank",
     },
@@ -321,7 +289,7 @@ const router = new VueRouter({
   routes,
 });
 
-// Navigation Guard
+//Navigation Guard
 router.beforeEach((to, from, next) => {
   const reqAuth = to.matched.some(r => r.meta.reqAuth);
   const reqLogout = to.matched.some(r => r.meta.reqLogout);

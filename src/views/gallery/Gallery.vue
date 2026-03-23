@@ -21,7 +21,7 @@
         <!-- Tabs & Filters -->
         <v-row class="mb-4" align="center">
           <v-col cols="12" sm="5" md="3" lg="3">
-            <v-btn-toggle v-model="viewMode" mandatory  dense class="d-flex">
+            <v-btn-toggle v-model="viewMode" mandatory dense class="d-flex">
               <v-btn value="grid" big class="flex-grow-1">
                 <v-icon small class="mr-1">{{ icons.mdiViewGrid }}</v-icon>
                 <span class="d-none d-sm-inline">Grid</span>
@@ -73,10 +73,10 @@
               <v-card hover class="folder-card" @click="openFolderPhotos(item)">
                 <v-img :src="item.image" height="200" cover>
                   <v-btn icon small @click.stop="toggleFavorite(item)" class="favorite-btn">
-                    <v-icon color="yellow darken-1">{{ icons.mdiStar }}</v-icon>
+                   <v-icon style="color: #FDD835 !important">{{ icons.mdiStar }}</v-icon>
                   </v-btn>
                   <v-btn v-if="canDeleteFolder" icon small @click.stop="confirmDeleteFolder(item)" class="delete-btn">
-                    <v-icon color="red">{{ icons.mdiDelete }}</v-icon>
+                    <v-icon style="color: #F44336 !important">{{ icons.mdiDelete }}</v-icon>
                   </v-btn>
                 </v-img>
                 <v-card-text class="pa-3 card-content-fixed">
@@ -109,7 +109,7 @@
                     <span style="color:black">{{ formatViewedTime(item.viewedAt) }}</span>
                   </v-chip>
                   <v-btn icon small @click.stop="toggleFavorite(item)" class="favorite-btn">
-                    <v-icon :color="isFavorite(item.id) ? 'yellow darken-1' : 'grey'">
+                    <v-icon :style="{ color: isFavorite(item.id) ? '#FDD835 !important' : '#9E9E9E !important' }">
                       {{ isFavorite(item.id) ? icons.mdiStar : icons.mdiStarOutline }}
                     </v-icon>
                   </v-btn>
@@ -164,12 +164,12 @@
               <v-card hover class="folder-card" @click="openFolderPhotos(item)">
                 <v-img :src="item.image" height="200" cover>
                   <v-btn icon small @click.stop="toggleFavorite(item)" class="favorite-btn">
-                    <v-icon :color="isFavorite(item.id) ? 'yellow darken-1' : 'grey'">
-                      {{ isFavorite(item.id) ? icons.mdiStar : icons.mdiStarOutline }}
+                    <v-icon :style="{ color: isFavorite(item.id) ? '#FDD835 !important' : '#9E9E9E !important' }">
+                        {{ isFavorite(item.id) ? icons.mdiStar : icons.mdiStarOutline }}
                     </v-icon>
                   </v-btn>
                   <v-btn v-if="canDeleteFolder" icon small @click.stop="confirmDeleteFolder(item)" class="delete-btn">
-                    <v-icon color="red">{{ icons.mdiDelete }}</v-icon>
+                    <v-icon :style="{ color: '#F44336 !important' }">{{ icons.mdiDelete }}</v-icon>
                   </v-btn>
                 </v-img>
                 <v-card-text class="pa-3 card-content-fixed">
@@ -218,39 +218,12 @@
         </v-card>
       </v-dialog>
 
-      <!-- Delete Folder Dialog -->
-      <v-dialog v-model="deleteFolderDialog" max-width="500" :fullscreen="$vuetify.breakpoint.xsOnly">
-        <v-card>
-          <v-card-title class="red--text">Delete Folder</v-card-title>
-          <v-card-text>Are you sure you want to delete "<strong>{{ folderToDelete ? folderToDelete.title : '' }}</strong>"? This will delete all photos in the folder.</v-card-text>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn text @click="deleteFolderDialog = false">Cancel</v-btn>
-            <v-btn color="red" @click="deleteFolder" :loading="deletingFolder">Delete</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-
-      <!-- Clear History Dialog -->
-      <v-dialog v-model="clearHistoryDialog" max-width="400" :fullscreen="$vuetify.breakpoint.xsOnly">
-        <v-card>
-          <v-card-title class="flex-wrap text-h6">Clear Recent History</v-card-title>
-          <v-card-text>Are you sure you want to clear all recent history? This action cannot be undone.</v-card-text>
-          <v-card-actions class="pa-4 flex-wrap">
-            <v-spacer></v-spacer>
-            <v-btn text @click="clearHistoryDialog = false" class="mb-2">Cancel</v-btn>
-            <v-btn color="error" @click="clearRecentHistory" class="mb-2 ml-2">Clear History</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-
-      <v-snackbar v-model="successSnackbar" color="success" timeout="3000" bottom>{{ successMessage }}</v-snackbar>
-      <v-snackbar v-model="errorSnackbar" color="error" timeout="5000" bottom>{{ errorMessage }}</v-snackbar>
     </v-container>
   </div>
 </template>
 
 <script>
+import Swal from 'sweetalert2'
 import { mdiCamera, mdiFolderPlus, mdiClose, mdiRefresh, mdiImageOff, mdiDelete, mdiMagnify, mdiMapMarker, mdiAccount, mdiImageMultiple, mdiViewGrid, mdiFolder, mdiStar, mdiStarOutline, mdiHistory, mdiClockOutline } from '@mdi/js'
 import GalleryService from '@/services/gallery/GalleryServices'
 import OfficeLocationService from '@/services/management/office/officeLocationServices'
@@ -284,12 +257,8 @@ export default {
       folderFormValid: false,
       newFolder: { folderName: '', officeLocationId: null },
       creatingFolder: false,
-      deleteFolderDialog: false,
       folderToDelete: null,
       deletingFolder: false,
-      clearHistoryDialog: false,
-      successSnackbar: false, successMessage: '',
-      errorSnackbar: false,   errorMessage: ''
     }
   },
   computed: {
@@ -363,12 +332,29 @@ export default {
       this.saveRecentViewed()
       this.showSuccess('Removed from recent')
     },
-    confirmClearHistory() { this.clearHistoryDialog = true },
-    clearRecentHistory() {
-      this.recentViewedItems = []
-      this.saveRecentViewed()
-      this.clearHistoryDialog = false
-      this.showSuccess('Recent history cleared')
+    confirmClearHistory() {
+      Swal.fire({
+        icon: "warning",
+        title: "Delete",
+        text: "Are you sure you want to clear all recent history?",
+        showCancelButton: true,
+        buttons: {
+          cancel: false,
+          confirm: true,
+        },
+        confirmButtonText: "Yes",
+        cancelButtonText: "No",
+        closeOnEsc: false,
+        closeOnClickOutside: false,
+      }).then((result) => {
+        if (result.isConfirmed) {
+          this.recentViewedItems = []
+          this.saveRecentViewed()
+          this.showSuccess('Recent history cleared')
+        } else {
+          return false
+        }
+      })
     },
     formatViewedTime(date) { return moment(date).fromNow() },
 
@@ -469,23 +455,70 @@ export default {
       this.creatingFolder = true
       try {
         const res = await GalleryService.createFolder(this.newFolder)
-        this.showSuccess('Folder created successfully')
         this.createFolderDialog = false
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: "Folder created successfully",
+          buttons: {
+            cancel: false,
+            confirm: true,
+          },
+          confirmButtonText: "Yes",
+          cancelButtonText: "No",
+          closeOnEsc: false,
+          closeOnClickOutside: false,
+        })
         const newId = res.data?.data
         newId
           ? this.$router.push({ name: 'FolderDetail', params: { id: newId, folder: { id: newId, title: this.newFolder.folderName } } })
           : await this.fetchGalleryData(this.getSelectedDivisionId())
-      } catch (e) { this.showError('Failed to create folder') }
-      finally { this.creatingFolder = false }
+      } catch (e) {
+        Swal.fire({
+          icon: "error",
+          title: "Failed",
+          text: "Failed to create folder",
+          buttons: {
+            cancel: false,
+            confirm: true,
+          },
+          confirmButtonText: "Yes",
+          cancelButtonText: "No",
+          closeOnEsc: false,
+          closeOnClickOutside: false,
+        })
+      } finally {
+        this.creatingFolder = false
+      }
     },
-    confirmDeleteFolder(folder) { this.folderToDelete = folder; this.deleteFolderDialog = true },
+    confirmDeleteFolder(folder) {
+      Swal.fire({
+        icon: "warning",
+        title: "Delete",
+        text: `Are you sure you want to delete "${folder.title}"? This will delete all photos in the folder.`,
+        showCancelButton: true,
+        buttons: {
+          cancel: false,
+          confirm: true,
+        },
+        confirmButtonText: "Yes",
+        cancelButtonText: "No",
+        closeOnEsc: false,
+        closeOnClickOutside: false,
+      }).then((result) => {
+        if (result.isConfirmed) {
+          this.folderToDelete = folder
+          this.deleteFolder()
+        } else {
+          return false
+        }
+      })
+    },
     async deleteFolder() {
       if (!this.folderToDelete) return
       this.deletingFolder = true
       try {
         await GalleryService.deleteFolder(this.folderToDelete.id)
-        this.showSuccess('Folder deleted successfully')
-        this.deleteFolderDialog = false
         const id = this.folderToDelete.id
         if (this.isFavorite(id)) {
           this.favoriteIds = this.favoriteIds.filter(fId => fId !== id)
@@ -493,12 +526,69 @@ export default {
         }
         this.recentViewedItems = this.recentViewedItems.filter(i => i.id !== id)
         this.saveRecentViewed()
+        this.folderToDelete = null
         await this.fetchGalleryData(this.getSelectedDivisionId())
-      } catch (e) { this.showError('Failed to delete folder') }
-      finally { this.deletingFolder = false }
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: "Folder deleted successfully",
+          buttons: {
+            cancel: false,
+            confirm: true,
+          },
+          confirmButtonText: "Yes",
+          cancelButtonText: "No",
+          closeOnEsc: false,
+          closeOnClickOutside: false,
+        })
+      } catch (e) {
+        Swal.fire({
+          icon: "error",
+          title: "Failed",
+          text: "Failed to delete folder",
+          buttons: {
+            cancel: false,
+            confirm: true,
+          },
+          confirmButtonText: "Yes",
+          cancelButtonText: "No",
+          closeOnEsc: false,
+          closeOnClickOutside: false,
+        })
+      } finally {
+        this.deletingFolder = false
+      }
     },
-    showSuccess(msg) { this.successMessage = msg; this.successSnackbar = true },
-    showError(msg)   { this.errorMessage   = msg; this.errorSnackbar   = true }
+    showSuccess(msg) {
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: msg,
+        buttons: {
+          cancel: false,
+          confirm: true,
+        },
+        confirmButtonText: "Yes",
+        cancelButtonText: "No",
+        closeOnEsc: false,
+        closeOnClickOutside: false,
+      })
+    },
+    showError(msg) {
+      Swal.fire({
+        icon: "error",
+        title: "Failed",
+        text: msg,
+        buttons: {
+          cancel: false,
+          confirm: true,
+        },
+        confirmButtonText: "Yes",
+        cancelButtonText: "No",
+        closeOnEsc: false,
+        closeOnClickOutside: false,
+      })
+    },
   }
 }
 </script>
