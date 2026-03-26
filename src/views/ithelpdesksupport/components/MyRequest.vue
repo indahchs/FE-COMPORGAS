@@ -37,7 +37,7 @@
             </v-btn>
           </v-col>
         </v-row>
-        <v-row v-if="isITLead" class="ma-0 mt-2">
+        <v-row v-if="canAddRequest" class="ma-0 mt-2">
           <v-spacer />
           <v-col cols="12" sm="6" md="6">
             <v-btn class="btn-blue" @click="showModal = true" depressed block>
@@ -65,7 +65,6 @@
               <v-icon color="white" x-small class="ml-1">{{ item.statusId === 'RESOLVED' ? icons.mdiCheckAll : icons.mdiCheck }}</v-icon>
             </v-chip>
           </template>
-          <!-- Kolom Actions khusus SUPER -->
           <template v-if="isSuperUser" #[`item.actions`]="{ item }">
             <v-btn icon small @click.stop="openDeleteConfirm(item)">
               <v-icon small color="error">{{ icons.mdiDelete }}</v-icon>
@@ -122,7 +121,9 @@ export default {
       tickets: [], catalogs: [], catalogSlaMap: {},
       allTickets: 0, assignedTickets: 0, progressTickets: 0, pendingTickets: 0, lateTickets: 0, solvedTickets: 0,
       showModal: false, modalData: {},
-      isITLead: false, canDownload: false, isSuperUser: false,
+      canAddRequest: false,
+      canDownload: false,
+      isSuperUser: false,
       ticketToDelete: null, isDeleting: false,
       headers: [
         { text: "Name",     value: "userName"    },
@@ -158,10 +159,10 @@ export default {
   },
 
   async created() {
-    const user       = JSON.parse(localStorage.getItem("dataUser"));
-    this.isITLead    = ["IT_LEAD", "SUPER"].includes(user?.roleId);
-    this.canDownload = ["IT_LEAD", "SUPER", "IT"].includes(user?.roleId);
-    this.isSuperUser = user?.roleId === "SUPER";
+    const user          = JSON.parse(localStorage.getItem("dataUser"));
+    this.canAddRequest  = user?.roleId === "SUPER";
+    this.canDownload    = ["IT_LEAD", "SUPER", "IT"].includes(user?.roleId);
+    this.isSuperUser    = user?.roleId === "SUPER";
     await Promise.all([this.loadCatalogs(), this.loadSlaMap()]);
     this.loadTickets();
     this.loadCounts();
@@ -175,7 +176,7 @@ export default {
   },
 
   methods: {
-    // ── SLA ─────────────────────────────────────────────────────────
+    //  SLA 
     async loadSlaMap() {
       try {
         const res = await svc.getHelpDeskPage({ size: 100, page: 0 });
@@ -203,7 +204,7 @@ export default {
       }[item.statusId] || "";
     },
 
-    // ── Data ─────────────────────────────────────────────────────────
+    //  Data 
     async loadCatalogs() {
       try {
         const res = await CatalogService.build().getAllOptions();
@@ -268,7 +269,7 @@ export default {
       } catch { this.lateTickets = 0; }
     },
 
-    // ── Aksi ─────────────────────────────────────────────────────────
+    //  Aksi 
     filterByStatus(status) { this.status = status; this.page = 1; this.loadTickets(); },
 
     viewDetail(ticket) {
@@ -300,17 +301,14 @@ export default {
       finally { this.exportLoading = false; }
     },
 
-    // ── Delete (khusus SUPER) ────────────────────────────────────────
+    // Delete
     openDeleteConfirm(item) {
       Swal.fire({
         icon: "warning",
         title: "Delete",
         text: `Are you sure you want to delete ticket ${item.number}?`,
         showCancelButton: true,
-        buttons: {
-          cancel: false,
-          confirm: true,
-        },
+        buttons: { cancel: false, confirm: true },
         confirmButtonText: "Yes",
         cancelButtonText: "No",
         closeOnEsc: false,
@@ -334,25 +332,19 @@ export default {
         this.tickets    = this.tickets.filter(t => t.id !== this.ticketToDelete.id);
         this.totalItems = Math.max(0, this.totalItems - 1);
         if (this.allTickets > 0) this.allTickets--;
-
         this.ticketToDelete = null;
 
         Swal.fire({
           icon: "success",
           title: "Success",
           text: "Tiket berhasil dihapus",
-          buttons: {
-            cancel: false,
-            confirm: true,
-          },
+          buttons: { cancel: false, confirm: true },
           confirmButtonText: "Yes",
           cancelButtonText: "No",
           closeOnEsc: false,
           closeOnClickOutside: false,
         }).then((result) => {
-          if (result) {
-            this.loading = false;
-          }
+          if (result) this.loading = false;
         });
 
       } catch (e) {
@@ -361,18 +353,13 @@ export default {
           icon: "error",
           title: "Failed",
           text: "Gagal menghapus tiket",
-          buttons: {
-            cancel: false,
-            confirm: true,
-          },
+          buttons: { cancel: false, confirm: true },
           confirmButtonText: "Yes",
           cancelButtonText: "No",
           closeOnEsc: false,
           closeOnClickOutside: false,
         }).then((result) => {
-          if (result) {
-            this.loading = false;
-          }
+          if (result) this.loading = false;
         });
       } finally {
         this.isDeleting = false;
