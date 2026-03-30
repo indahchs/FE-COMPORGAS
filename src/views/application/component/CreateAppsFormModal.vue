@@ -58,9 +58,9 @@
               <v-row style="margin: 0px" class="mb-5">
                 <v-col v-if="selectedFile1 === null" style="text-align: center; border-style: dotted" :style="isPict ? 'color: red !important; border-color:red; ' : ''
                   " cols="12" @click="onButtonClick">
-                  <v-icon size="50"> {{ icons.mdiFileDocumentOutline }} </v-icon><br />
+                  <v-icon size="50"> {{ icons.mdiImage }} </v-icon><br />
                   <span class="font-subt">Add Icon/Logo</span><br />
-                  <span class="font-subt">Max 1 file and max 1 MB</span><br />
+                  <span class="font-subt">Max 1 image and max 1 MB</span><br />
                   <span class="font-subt">Resolution 80 x 80 px</span>
                 </v-col>
                 <v-col v-else class="mb-12" style="text-align: center" cols="12">
@@ -95,7 +95,7 @@
 
 <script>
 import { required } from "vuelidate/lib/validators";
-import { mdiClose, mdiFileDocumentOutline } from "@mdi/js";
+import { mdiClose, mdiImage } from "@mdi/js";
 import Swal from "sweetalert2";
 import ApplicationService from "../../../services/application/applicationServices";
 import { hitAPI } from "@/services/upload/uploadServices";
@@ -131,7 +131,7 @@ export default {
       baseUrl: process.env.VUE_APP_PERTAGAS,
       isDivisionDisabled: false,
       icons: {
-        mdiFileDocumentOutline,
+        mdiImage,
         mdiClose,
       },
     };

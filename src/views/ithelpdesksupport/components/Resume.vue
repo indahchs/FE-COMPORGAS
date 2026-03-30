@@ -490,7 +490,7 @@ export default {
       }
     },
 
-    // ── SLA ─────────────────────────────────────────────────────────
+    //  SLA 
     async loadSlaMap() {
       try {
         const res = await getTicket.getHelpDeskPage({ size: 100, page: 0 });
@@ -507,7 +507,7 @@ export default {
       return slaHours > 0 && moment().diff(moment(item.createdAt), "hours") > slaHours;
     },
 
-    // ── API Count ────────────────────────────────────────────────────
+    //  API Count 
     async getAllTicketsCount() {
       try { this.allTickets      = (await dashboardService.getAllTicketsCount({ year: this.globalYear, month: this.globalMonth })).data.data || 0; } catch { this.allTickets = 0; }
     },
@@ -536,7 +536,7 @@ export default {
       } catch { this.lateTickets = 0; }
     },
 
-    // ── API Charts ───────────────────────────────────────────────────
+    //  API Charts 
     async getTicketsByMonth() {
       try {
         const data = (await dashboardService.getTicketCountByMonth({ year: this.globalYear, month: this.globalMonth })).data.data || [];
@@ -583,7 +583,7 @@ export default {
       catch { this.yearOptions = [new Date().getFullYear()]; }
     },
 
-    // ── Table ────────────────────────────────────────────────────────
+    //  Table 
     async viewDetails(title, filter) {
       this.currentFilter = filter;
       this.titleHeader   = title;
@@ -596,7 +596,6 @@ export default {
     async loadTableData() {
       this.isLoading = true;
       try {
-        // Kalau LATE, fetch semua tanpa filter status (nanti filter client-side)
         const res  = await getTicket.getTicketPic({
           keyword: null, location: null, startDate: null, endDate: null, catalog: null,
           status:  this.statusFilter === "LATE" ? null : this.statusFilter,
@@ -642,14 +641,14 @@ export default {
       this.statusFilter  = null;
     },
 
-    // ── Ticket Actions ───────────────────────────────────────────────
+    //  Ticket Actions 
     openTicketDetail(item) { this.selectedTicket = item; this.detailDialog = true; },
     editTicket(ticket) {
       this.detailDialog = false;
       this.$router.push({ name: "ithelpdesksupport-my-request-detail", params: { id: ticket.id } });
     },
 
-    // ── Comparison ───────────────────────────────────────────────────
+    // Comparison 
     async showComparison() {
       this.isLoading = true;
       try {
@@ -692,12 +691,17 @@ export default {
       return Math.round(((newVal - oldVal) / oldVal) * 100);
     },
 
-    // ── Export ───────────────────────────────────────────────────────
+    //  Export 
     async exportToExcel() {
       this.exporting = true;
       try {
         this.showSnackbar(`Loading data for ${this.currentPeriodText}...`, "info");
-        const res  = await getTicket.getTicketPic({ keyword: null, location: null, startDate: null, endDate: null, catalog: null, status: null, size: 1000, page: 0 });
+
+        const res = await getTicket.getTicketPic({
+          keyword: null, location: null, startDate: null, endDate: null,
+          catalog: null, status: null, size: 1000, page: 0,
+        });
+
         const data = (res.data.data.content || []).filter(item => {
           const d = moment(item.createdAt);
           return d.year() === this.globalYear && (d.month() + 1) === this.globalMonth;
@@ -708,36 +712,56 @@ export default {
           return;
         }
 
-        const headers = ["No", "Name", "PIC", "Ticket Number", "Created Date", "Title", "Service Category", "Location/Office", "Status"];
-        let tableHTML = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-          <head><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>
-            <x:Name>Tickets</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>
-          </x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
-          <style>table{border-collapse:collapse;width:100%}th{background-color:#4CAF50;color:white;font-weight:bold;padding:12px;text-align:left;border:1px solid #ddd}td{padding:10px;border:1px solid #ddd;text-align:left}tr:nth-child(even){background-color:#f2f2f2}</style>
-          </head><body><table><thead><tr>`;
-        headers.forEach(h => { tableHTML += `<th>${h}</th>`; });
-        tableHTML += `</tr></thead><tbody>`;
-        data.forEach((item, i) => {
-          tableHTML += `<tr>
-            <td>${i + 1}</td><td>${this.escapeHTML(item.userName || "-")}</td>
-            <td>${this.escapeHTML(item.picName || "-")}</td><td>${this.escapeHTML(item.number || "-")}</td>
-            <td>${this.formatDate(item.createdAt)}</td><td>${this.escapeHTML(item.title || "-")}</td>
-            <td>${this.escapeHTML(item.catalogName || "-")}</td><td>${this.escapeHTML(item.officeName || "-")}</td>
-            <td>${this.escapeHTML(item.statusName || "-")}</td></tr>`;
-        });
-        tableHTML += `</tbody></table></body></html>`;
+        const XLSX = await import("xlsx");
 
-        const blob = new Blob([tableHTML], { type: "application/vnd.ms-excel" });
-        const url  = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href  = url;
-        link.download = `Helpdesk_Tickets_${this.currentPeriodText.replace(/ /g, "_")}_${moment().format("YYYYMMDD_HHmmss")}.xls`;
-        link.style.display = "none";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        this.showSnackbar(`Exported ${data.length} tickets for ${this.currentPeriodText}`, "success");
+        const headers = ["No", "Name", "PIC", "Ticket Number", "Created Date", "Title", "Service Category", "Location/Office", "Status"];
+
+        const rows = data.map((item, i) => [
+          i + 1,
+          item.userName    || "-",
+          item.picName     || "-",
+          item.number      || "-",
+          this.formatDate(item.createdAt),
+          item.title       || "-",
+          item.catalogName || "-",
+          item.officeName  || "-",
+          item.statusName  || "-",
+        ]);
+
+        const wsData = [headers, ...rows];
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+        ws["!cols"] = headers.map((h, colIndex) => {
+          const maxLen = Math.max(
+            h.length,
+            ...rows.map(row => String(row[colIndex] || "").length)
+          );
+          return { wch: Math.min(maxLen + 2, 60) };
+        });
+
+        ws["!freeze"] = { xSplit: 0, ySplit: 1 };
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Tickets");
+
+        const summaryData = [
+          ["Summary", ""],
+          ["Period", this.currentPeriodText],
+          ["Total Tickets", this.allTickets],
+          ["Assigned", this.assignedTickets],
+          ["In Progress", this.progressTickets],
+          ["Pending", this.pendingTickets],
+          ["Late", this.lateTickets],
+          ["Solved", this.solvedTickets],
+          ["Export Date", moment().format("DD MMM YYYY HH:mm")],
+        ];
+        const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+        wsSummary["!cols"] = [{ wch: 20 }, { wch: 20 }];
+        XLSX.utils.book_append_sheet(wb, wsSummary, "Summary");
+
+        XLSX.writeFile(wb, `Helpdesk_Tickets_${this.currentPeriodText.replace(/ /g, "_")}_${moment().format("YYYYMMDD_HHmmss")}.xlsx`);
+
+        this.showSnackbar(`Exported ${data.length} tickets`, "success");
       } catch (e) {
         console.error("Export error:", e);
         this.showSnackbar("Export error. Please try again.", "error");
@@ -746,7 +770,7 @@ export default {
       }
     },
 
-    // ── Helpers ──────────────────────────────────────────────────────
+    //  Helpers 
     escapeHTML(text) { const d = document.createElement("div"); d.textContent = text; return d.innerHTML; },
     formatDate(date) { return moment(date).format("DD MMM YYYY"); },
     calculatePercentage(value) {

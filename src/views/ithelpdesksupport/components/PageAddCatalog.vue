@@ -71,10 +71,10 @@
                 cols="12"
                 @click="onButtonClick"
               >
-                <v-icon size="50"> {{ icons.mdiFileDocumentOutline }} </v-icon
+                <v-icon size="50"> {{ icons.mdiImage }} </v-icon
                 ><br />
-                <span class="font-subt">Add File</span><br />
-                <span class="font-subt">Max 1 file dan max size 5 MB</span>
+                <span class="font-subt">Add Image</span><br />
+                <span class="font-subt">Max 1 image dan max size 5 MB</span><br />
               </v-col>
               <v-col v-else class="mb-12" style="text-align: center" cols="12">
                 <button style="margin-left: 80px" id="x" @click="deleteImage()">
@@ -204,7 +204,7 @@ import {
   mdiCloseBox,
   mdiTrashCanOutline,
   mdiArrowLeft,
-  mdiFileDocumentOutline,
+  mdiImage,
   mdiPlus,
 } from "@mdi/js";
 import CreatePicFormModalVue from "./CreatePicFormModal.vue";
@@ -261,7 +261,7 @@ export default {
         mdiPlus,
         mdiCloseBox,
         mdiTrashCanOutline,
-        mdiFileDocumentOutline,
+        mdiImage,
       },
     };
   },
@@ -453,14 +453,15 @@ export default {
       this.$v.$touch();
       if (this.selectedFile1 === null) {
         this.isPict = true;
-      } else {
-        this.isPict = false;
-        if (
-          !this.$v.slaHari.$invalid &&
-          !this.$v.slaJam.$invalid &&
-          !this.$v.catalog.$invalid &&
-          !this.$v.note.$invalid
-        ) {
+        return;
+      }
+      this.isPict = false;
+      if (
+        !this.$v.slaHari.$invalid &&
+        !this.$v.slaJam.$invalid &&
+        !this.$v.catalog.$invalid &&
+        !this.$v.note.$invalid
+      ) {
           this.loading = true;
           const param = {
             id: this.idEdit,
@@ -497,14 +498,10 @@ export default {
             Swal.fire({
               icon: "error",
               title: "Failed",
-              text:
-                res.data.errors !== null
-                  ? res.data.errors[0].message
-                  : res.data.message,
-              buttons: {
-                cancel: false,
-                confirm: true,
-              },
+              text: res.data.errors !== null
+                ? res.data.errors[0].message
+                : res.data.message,
+              buttons: { cancel: false, confirm: true },
               closeOnEsc: false,
               closeOnClickOutside: false,
             }).then((result) => {
@@ -514,7 +511,6 @@ export default {
             });
           }
         }
-      }
     },
     getErrors(name, model) {
       const errors = [];
@@ -560,6 +556,8 @@ export default {
     },
     deleteImage() {
       this.$refs.uploader.value = "";
+      this.inputText = "";
+      this.imgUpload = null;
       this.selectedFile1 = null;
       this.isSelecting = false;
     },
@@ -582,24 +580,27 @@ export default {
       });
     },
     onFileChanged(e) {
-      this.selectedFile = e.target.files[0];
-      this.inputText = e.target.files[0].name;
-      if (e.target.files[0].size > 5000000) {
+      const file = e.target.files[0];
+      if (!file) return;
+      this.inputText = file.name;
+
+      if (file.size > 5000000) {
         this.errorPopup("File upload exceeds the 5MB limit!");
-      } else if (
-        e.target.files[0].type === "image/png" ||
-        e.target.files[0].type === "image/jpeg" ||
-        e.target.files[0].type === "image/jpg"
-      ) {
-        this.imgUpload = URL.createObjectURL(e.target.files[0]);
-        this.selectedFile1 = e.target.files[0];
-        this.inputText = e.target.files[0].name;
-        // this.uploadFile(this.selectedFile1);
-      } else {
-        this.errorPopup("Unsupported Image File");
+        this.$refs.uploader.value = "";
+        return;
       }
 
-      // do something
+      if (["image/png", "image/jpeg", "image/jpg"].includes(file.type)) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          this.imgUpload = e.target.result;
+          this.selectedFile1 = file;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        this.errorPopup("Unsupported Image File");
+        this.$refs.uploader.value = "";
+      }
     },
     onButtonClick(x) {
       this.idBtn = x;

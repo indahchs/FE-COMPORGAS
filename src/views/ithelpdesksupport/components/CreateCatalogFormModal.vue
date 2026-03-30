@@ -1,6 +1,6 @@
 <template>
   <v-row justify="center">
-    <v-dialog v-model="isOpen" width="400" persistent>
+    <v-dialog v-model="isOpen" width="1000" persistent>
       <v-card>
         <v-card-title>
           <v-row align="center">
@@ -25,100 +25,98 @@
         </v-card-title>
         <v-card-text>
           <form @submit.prevent="submit">
-            <label class="required">Catalog</label>
-            <v-text-field
-              dense
-              v-model.trim="$v.service.$model"
-              :error-messages="getErrors('service', $v.service)"
-              @blur="$v.service.$touch()"
-              outlined
-              placeholder="Catalog"
-            ></v-text-field>
-            <!-- <label class="required">Office Location</label>
-            <v-select
-              dense
-              v-model.trim="$v.location.$model"
-              :error-messages="getErrors('location', $v.location)"
-              @blur="$v.location.$touch()"
-              :items="locationData"
-              outlined
-              placeholder="Office Location"
-            ></v-select> -->
-            <label class="required">SLA Days</label>
-            <v-text-field
-              dense
-              type="number"
-              min="0"
-              v-model.trim="$v.slaHari.$model"
-              :error-messages="getErrors('slaHari', $v.slaHari)"
-              @blur="$v.slaHari.$touch()"
-              outlined
-              placeholder="SLA Days"
-            ></v-text-field>
-            <label class="required">SLA Hours</label>
-            <v-text-field
-              dense
-              type="number"
-              min="0"
-              v-model.trim="$v.slaJam.$model"
-              :error-messages="getErrors('slaJam', $v.slaJam)"
-              @blur="$v.slaJam.$touch()"
-              outlined
-              placeholder="SLA Hours"
-            ></v-text-field>
-            <label class="required">Upload File</label>
-            <v-row style="margin: 0px" class="mb-5 mt-4">
-              <v-col
-                v-if="selectedFile1 === null"
-                style="text-align: center; border-style: dotted"
-                :style="
-                  isPict ? 'color: red !important; border-color:red; ' : ''
-                "
-                cols="12"
-                @click="onButtonClick"
-              >
-                <v-icon size="50"> {{ icons.mdiFileDocumentOutline }} </v-icon
-                ><br />
-                <span class="font-subt">Add File</span><br />
-                <span class="font-subt">Max 1 file dan max size 5 MB</span
-                ><br />
-                <span class="font-subt">Resolution 80 x 80 px</span>
+            <v-row>
+              <v-col cols="12">
+                <label class="required">Catalog</label>
+                <v-text-field
+                  dense
+                  v-model.trim="$v.service.$model"
+                  :error-messages="getErrors('service', $v.service)"
+                  @blur="$v.service.$touch()"
+                  outlined
+                  placeholder="Catalog"
+                ></v-text-field>
               </v-col>
-              <v-col v-else class="mb-12" style="text-align: center" cols="12">
-                <button style="float: right" id="x" @click="deleteImage()">
-                  X</button
-                ><br />
-                <img style="width: 100%; height: 200px; object-fit: contain;" :src="imgUpload" />
-                <br /><span class="limit-text">{{
-                  selectedFile1.fileName || inputText
-                }}</span>
-              </v-col>
-              <input
-                ref="uploader"
-                class="d-none"
-                type="file"
-                accept="image/*"
-                @change="onFileChanged"
-              />
-              <div
-                class="mt-1"
-                v-if="isPict"
-                style="color: red; font-weight: 400; font-size: 12px"
-              >
-                Logo is required
-              </div>
             </v-row>
-            <label class="required">Note</label>
-            <v-textarea
-              v-model.trim="$v.note.$model"
-              :error-messages="getErrors('note', $v.note)"
-              @blur="$v.note.$touch()"
-              outlined
-              placeholder="Write your note here"
-            >
-            </v-textarea>
 
-            <br />
+            <v-row>
+              <v-col cols="6">
+                <label class="required">SLA Days</label>
+                <v-text-field
+                  dense
+                  type="number"
+                  min="0"
+                  v-model.trim="$v.slaHari.$model"
+                  :error-messages="getErrors('slaHari', $v.slaHari)"
+                  @blur="$v.slaHari.$touch()"
+                  outlined
+                  placeholder="SLA Days"
+                ></v-text-field>
+              </v-col>
+              <v-col cols="6">
+                <label class="required">SLA Hours</label>
+                <v-text-field
+                  dense
+                  type="number"
+                  min="0"
+                  v-model.trim="$v.slaJam.$model"
+                  :error-messages="getErrors('slaJam', $v.slaJam)"
+                  @blur="$v.slaJam.$touch()"
+                  outlined
+                  placeholder="SLA Hours"
+                ></v-text-field>
+              </v-col>
+            </v-row>
+
+            <!-- Baris 3: Icon/Logo | Note -->
+            <v-row>
+              <v-col cols="6">
+                <label class="required">Upload Icon</label>
+                <v-row style="margin: 0px" class="mt-1">
+                  <v-col
+                    v-if="selectedFile1 === null"
+                    style="text-align: center; border-style: dotted; min-height: 174px; display: flex; flex-direction: column; justify-content: center; cursor: pointer;"
+                    :style="isPict ? 'color: red !important; border-color:red; ' : ''"
+                    cols="12"
+                    @click="onButtonClick"
+                  >
+                    <div>
+                      <v-icon size="50"> {{ icons.mdiImage }} </v-icon><br />
+                      <span class="font-subt">Add Icon</span><br />
+                      <span class="font-subt">Max 1 image dan max size 5 MB</span><br />
+                    </div>
+                  </v-col>
+                  <v-col v-else style="text-align: center; min-height: 196px;" cols="12">
+                    <button style="float: right" id="x" @click="deleteImage()">X</button><br />
+                    <img style="width: 100%; height: 160px; object-fit: contain;" :src="imgUpload" />
+                    <br /><span class="limit-text">{{ selectedFile1.fileName || inputText }}</span>
+                  </v-col>
+                  <input
+                    ref="uploader"
+                    class="d-none"
+                    type="file"
+                    accept="image/*"
+                    @change="onFileChanged"
+                  />
+                  <div class="mt-1" v-if="isPict" style="color: red; font-weight: 400; font-size: 12px">
+                    Logo is required
+                  </div>
+                </v-row>
+              </v-col>
+              <v-col cols="6">
+                <label class="required">Note</label>
+                <v-textarea
+                  v-model.trim="$v.note.$model"
+                  :error-messages="getErrors('note', $v.note)"
+                  @blur="$v.note.$touch()"
+                  outlined
+                  placeholder="Write your note here"
+                  rows="7"
+                  no-resize
+                ></v-textarea>
+              </v-col>
+            </v-row>
+
             <v-btn :loading="loading" class="btn-submit" @click="submit">
               Create Catalog
             </v-btn>
@@ -130,7 +128,7 @@
 </template>
 <script>
 import { required } from "vuelidate/lib/validators";
-import { mdiClose, mdiFileDocumentOutline } from "@mdi/js";
+import { mdiClose, mdiImage } from "@mdi/js";
 import Swal from "sweetalert2";
 import { hitAPI } from "@/services/upload/uploadServices";
 import ItHelpDeskService from "../../../services/ithelpdesk/itHelpDeskServices";
@@ -154,12 +152,12 @@ export default {
       imgUpload: null,
       selectedFile1: null,
       inputText: "",
-      isSelecting: false,
       eventCategory: null,
       eventCategories: ["Event 1", "Event 2"],
       isSelecting: false,
+      resolutionError: "",
       icons: {
-        mdiFileDocumentOutline,
+        mdiImage,
         mdiClose,
       },
     };
@@ -274,46 +272,38 @@ export default {
       this.$v.$touch();
       if (this.selectedFile1 === null) {
         this.isPict = true;
-      } else {
-        this.isPict = false;
-        if (
-          !this.$v.slaHari.$invalid &&
-          !this.$v.slaJam.$invalid &&
-          // !this.$v.location.$invalid &&
-          !this.$v.service.$invalid &&
-          !this.$v.note.$invalid
-        ) {
-          this.loading = true;
-          const param = {
-            // officeLocationId: this.location,
-            name: this.service,
-            slaDays: this.slaHari,
-            slaHours: this.slaJam,
-            note: this.note,
-          };
-          const res = await getHelpDesk.postHelpDesk(param);
-          if (res.data.status === 200) {
-            this.uploadFile(res.data.data.id);
-          } else {
-            Swal.fire({
-              icon: "error",
-              title: "Failed",
-              text:
-                res.data.errors !== null
-                  ? res.data.errors[0].message
-                  : res.data.message,
-              buttons: {
-                cancel: false,
-                confirm: true,
-              },
-              closeOnEsc: false,
-              closeOnClickOutside: false,
-            }).then((result) => {
-              if (result) {
-                this.close();
-              }
-            });
-          }
+        return;
+      }
+      this.isPict = false;
+      if (
+        !this.$v.slaHari.$invalid &&
+        !this.$v.slaJam.$invalid &&
+        !this.$v.service.$invalid &&
+        !this.$v.note.$invalid
+      ) {
+        this.loading = true;
+        const param = {
+          name: this.service,
+          slaDays: this.slaHari,
+          slaHours: this.slaJam,
+          note: this.note,
+        };
+        const res = await getHelpDesk.postHelpDesk(param);
+        if (res.data.status === 200) {
+          this.uploadFile(res.data.data.id);
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Failed",
+            text: res.data.errors !== null ? res.data.errors[0].message : res.data.message,
+            buttons: { cancel: false, confirm: true },
+            closeOnEsc: false,
+            closeOnClickOutside: false,
+          }).then((result) => {
+            if (result) {
+              this.close();
+            }
+          });
         }
       }
     },
@@ -343,25 +333,29 @@ export default {
       });
     },
     onFileChanged(e) {
-      this.selectedFile = e.target.files[0];
-      this.inputText = e.target.files[0].name;
-      if (e.target.files[0].size > 5000000) {
-        this.errorPopup("File upload exceeds the 5MB limit!");
-      } else if (
-        e.target.files[0].type === "image/png" ||
-        e.target.files[0].type === "image/jpeg" ||
-        e.target.files[0].type === "image/jpg"
-      ) {
-        this.imgUpload = URL.createObjectURL(e.target.files[0]);
-        this.selectedFile1 = e.target.files[0];
-        this.inputText = e.target.files[0].name;
-      } else {
-        this.errorPopup("Unsupported Image File");
-      }
+    const file = e.target.files[0];
+    if (!file) return;
+    this.inputText = file.name;
 
-      // do something
-    },
-    onButtonClick(x) {
+    if (file.size > 5000000) {
+      this.errorPopup("File upload exceeds the 5MB limit!");
+      this.$refs.uploader.value = "";
+      return;
+    }
+
+    if (["image/png", "image/jpeg", "image/jpg"].includes(file.type)) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.imgUpload = e.target.result;
+        this.selectedFile1 = file;
+        this.resolutionError = "";
+      };
+      reader.readAsDataURL(file);
+    } else {
+      this.errorPopup("Unsupported Image File");
+      this.$refs.uploader.value = "";
+    }
+  },onButtonClick(x) {
       this.idBtn = x;
       this.isSelecting = true;
       window.addEventListener(
@@ -378,14 +372,17 @@ export default {
       this.slaHari = "";
       this.slaJam = "";
       this.note = "";
-      this.isPict = false;
       this.selectedFile1 = null;
       this.imgUpload = null;
+      this.isValidResolution = false;
+      this.resolutionError = "";
       this.$v.$reset();
+      this.isPict = false;
       this.$emit("close");
     },
   },
 };
+
 </script>
 <style scope>
 .required:after {

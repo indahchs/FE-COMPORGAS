@@ -551,28 +551,49 @@ export default {
     },
     
     exportData() {
-      const headers = ["Name", "Category", "Description", "Link"];
-      const csvData = this.flattenedApps.map(app => [
-        app.name,
-        app.category,
-        app.description || "",
-        app.link || "",
-      ]);
-      
-      const csvContent = [
-        headers.join(","),
-        ...csvData.map(row => row.map(cell => `"${cell}"`).join(","))
-      ].join("\n");
-      
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute("download", "business_applications.csv");
-      link.style.visibility = "hidden";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      import('xlsx').then(XLSX => {
+        const headers = ["No", "Name", "Category", "Description", "Link"];
+
+        const rows = this.flattenedApps.map((app, index) => [
+          index + 1,
+          app.name || "",
+          app.category || "",
+          app.description || "",
+          app.link && typeof app.link === "string" && app.link.trim() !== ""
+            ? app.link.trim()
+            : "No Link",
+        ]);
+
+        const wsData = [headers, ...rows];
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+        // Auto-fit lebar kolom berdasarkan konten terpanjang
+        const colWidths = headers.map((h, colIndex) => {
+          const maxLen = Math.max(
+            h.length,
+            ...rows.map(row => String(row[colIndex] || "").length)
+          );
+          return { wch: Math.min(maxLen + 2, 60) }; // max 60 karakter
+        });
+        ws['!cols'] = colWidths;
+
+        // Style header: bold
+        const headerRange = XLSX.utils.decode_range(ws['!ref']);
+        for (let C = headerRange.s.c; C <= headerRange.e.c; C++) {
+          const cellAddr = XLSX.utils.encode_cell({ r: 0, c: C });
+          if (!ws[cellAddr]) continue;
+          ws[cellAddr].s = {
+            font: { bold: true },
+            fill: { fgColor: { rgb: "0172B9" } },
+            font: { bold: true, color: { rgb: "FFFFFF" } },
+          };
+        }
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Business Applications");
+
+        XLSX.writeFile(wb, `business_applications_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      });
     },
     
     updateDialogVisible(value) {

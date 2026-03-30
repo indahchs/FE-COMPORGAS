@@ -8,7 +8,6 @@ const ServiceConfig = axios.create({
         try {
           data = JSON.parse(data)
         } catch (e) {
-          /* Ignore */
         }
       }
 
@@ -17,7 +16,6 @@ const ServiceConfig = axios.create({
   ],
 })
 
-// logging response request on development environment
 if (process.env.NODE_ENV === 'development') {
   ServiceConfig.interceptors.request.use(
     function (config) {
@@ -28,7 +26,7 @@ if (process.env.NODE_ENV === 'development') {
     },
   )
 
-  // Add a response interceptor
+  // Tambah renspon API dengan interceptor
   ServiceConfig.interceptors.response.use(
     function (response) {
       return response

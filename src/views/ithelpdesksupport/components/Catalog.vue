@@ -83,7 +83,11 @@
       :open="openModal"
       @close="openModal = false"
     ></HelpdeskFormModal>
-    <CreateCatalog :open="openModalCatalog" @close="closeModal"></CreateCatalog>
+    <CreateCatalog 
+      v-if="openModalCatalog"
+      :open="openModalCatalog" 
+      @close="closeModal">
+    </CreateCatalog>
   </div>
 </template>
 <script>
@@ -206,6 +210,7 @@ export default {
     },
     onClickChild() {
       this.isList = true;
+      this.pages = 1; 
       this.getHelpDesk(1);
     },
     async getLocations() {
