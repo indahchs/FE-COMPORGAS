@@ -1,12 +1,12 @@
 <template>
   <div>
     <v-row>
-      <v-col cols="12" sm="6" md="4" lg="10"
-        ><span class="title-page">User</span></v-col
-      >
-      <!-- <v-col cols="12" sm="6" md="4" lg="2">
-        <v-btn class="btn-submit" @click="createFaq"> Create User </v-btn>
-      </v-col> -->
+      <v-col cols="12" sm="6" md="4" lg="10">
+        <span class="title-page">User</span>
+      </v-col>
+      <v-col cols="12" sm="6" md="4" lg="2" v-if="isSuperRole">
+        <v-btn class="btn-submit" @click="createUser"> Create User </v-btn>
+      </v-col>
     </v-row>
     <v-card class="mt-4">
       <v-card-text>
@@ -20,30 +20,6 @@
               label="Search by Employee Name"
             ></v-text-field>
           </v-col>
-          <!-- <v-col cols="12" sm="6" md="4" lg="3">
-            <v-text-field
-              dense
-              v-model="email"
-              outlined
-              label="Email"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12" sm="6" md="4" lg="3">
-            <v-text-field
-              dense
-              v-model="role"
-              outlined
-              label="Role"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="12" sm="6" md="4" lg="3">
-            <v-text-field
-              v-model="title"
-              outlined
-              dense
-              label="Title"
-            ></v-text-field>
-          </v-col> -->
         </v-row>
       </v-card-text>
       <v-card-text>
@@ -59,25 +35,41 @@
             'show-first-last-page': true,
           }"
         >
-          <template #[`item.aksi`]="{ item, index }">
-            <v-tooltip bottom>
-              <template v-slot:activator="{ on, attrs }">
-                <v-icon
-                  color="#0172b9"
-                  v-bind="attrs"
-                  v-on="on"
-                  size="20"
-                  @click="handleClick(item)"
-                  >{{ icons.mdiPencilOutline }}</v-icon
-                > </template
-              ><span>Edit</span></v-tooltip
-            >
+          <template #[`item.aksi`]="{ item }">
+            <template v-if="isSuperRole">
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-icon
+                    class="mr-6"
+                    color="#0172b9"
+                    v-bind="attrs"
+                    v-on="on"
+                    size="20"
+                    @click="handleClick(item)"
+                  >{{ icons.mdiPencilOutline }}</v-icon>
+                </template>
+                <span>Edit</span>
+              </v-tooltip>
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on, attrs }">
+                  <v-icon
+                    color="#0172b9"
+                    v-bind="attrs"
+                    v-on="on"
+                    size="20"
+                    @click="deleteConfirm(item.id)"
+                  >{{ icons.mdiTrashCanOutline }}</v-icon>
+                </template>
+                <span>Delete</span>
+              </v-tooltip>
+            </template>
+            <span v-else>-</span>
           </template>
         </v-data-table>
         <div class="ml-4" style="display: flex; justify-content: space-between">
-          <span style="font-weight: 700; align-self: center"
-            >Total Data : {{ totalItems }}</span
-          ><br />
+          <span style="font-weight: 700; align-self: center">
+            Total Data : {{ totalItems }}
+          </span>
           <v-pagination
             v-model="pages"
             :length="totalPage"
@@ -94,6 +86,7 @@
     ></CreateUser>
   </div>
 </template>
+
 <script>
 import Swal from "sweetalert2";
 import {
@@ -106,10 +99,9 @@ import CreateUser from "./CreateUserFormModal.vue";
 import UserService from "../../../services/management/user/userServices";
 
 const getUser = UserService.build();
+
 export default {
-  components: {
-    CreateUser,
-  },
+  components: { CreateUser },
   data() {
     return {
       pages: 1,
@@ -117,20 +109,14 @@ export default {
       totalItems: 0,
       itemsPerpage: 10,
       name: "",
-      email: "",
-      role: "",
-      title: "",
       datas: {},
       openModalFaq: false,
-      selectedTab: 0,
-      tabs: ["Eksternal", "Internal"],
       icons: {
         mdiPencilOutline,
         mdiMagnify,
         mdiChevronRight,
         mdiTrashCanOutline,
       },
-      item: 0,
       headers: [
         { text: "Employee Name", value: "fullName" },
         { text: "Email", value: "email" },
@@ -141,6 +127,12 @@ export default {
       items: [],
     };
   },
+  computed: {
+    isSuperRole() {
+      const user = JSON.parse(localStorage.getItem("dataUser"));
+      return user?.roleId === "SUPER";
+    },
+  },
   watch: {
     name() {
       this.getUser(1);
@@ -150,8 +142,12 @@ export default {
     this.getUser(1);
   },
   methods: {
-    handleClick(x) {
-      this.datas = x;
+    createUser() {
+      this.datas = {};
+      this.openModalFaq = true;
+    },
+    handleClick(item) {
+      this.datas = item;
       this.openModalFaq = true;
     },
     closeModal() {
@@ -159,61 +155,54 @@ export default {
       this.datas = {};
       this.onPageChangeDetil(1);
     },
-    async deleteConfirm(x) {
+    async deleteConfirm(id) {
       Swal.fire({
         icon: "warning",
         title: "Delete",
-        text: "Are you sure you deleted this data?",
+        text: "Are you sure you want to delete this data?",
         showCancelButton: true,
-        buttons: {
-          cancel: false,
-          confirm: true,
-        },
-        closeOnEsc: false,
-        closeOnClickOutside: false,
+        showConfirmButton: true,
+        allowEscapeKey: false,
+        allowOutsideClick: false,
       }).then((result) => {
         if (result.isConfirmed) {
-          this.deleteData(x);
-        } else {
-          return false;
+          this.deleteData(id);
         }
       });
     },
-    async deleteData(param) {
-      const res = await getUser.deleteUser(param);
-      if (res.data.status === 200) {
-        Swal.fire({
-          icon: "success",
-          title: "Success",
-          text: res.data.message,
-          buttons: {
-            cancel: false,
-            confirm: true,
-          },
-          closeOnEsc: false,
-          closeOnClickOutside: false,
-        }).then((result) => {
-          if (result) {
-            this.loading = false;
-            this.getUser(1);
-          }
-        });
-      } else {
+    async deleteData(id) {
+      try {
+        const res = await getUser.deleteUser(id);
+        if (res.data.status === 200) {
+          Swal.fire({
+            icon: "success",
+            title: "Success",
+            text: res.data.message,
+            showCancelButton: false,
+            showConfirmButton: true,
+            allowEscapeKey: false,
+            allowOutsideClick: false,
+          }).then((result) => {
+            if (result) {
+              this.getUser(1);
+            }
+          });
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Failed",
+            text: res.data.message,
+            showCancelButton: false,
+            showConfirmButton: true,
+            allowEscapeKey: false,
+            allowOutsideClick: false,
+          });
+        }
+      } catch (error) {
         Swal.fire({
           icon: "error",
           title: "Failed",
-          text: res.data.message,
-          buttons: {
-            cancel: false,
-            confirm: true,
-          },
-          closeOnEsc: false,
-          closeOnClickOutside: false,
-        }).then((result) => {
-          if (result) {
-            this.loading = false;
-            this.getUser(1);
-          }
+          text: "Terjadi kesalahan saat menghapus data.",
         });
       }
     },
@@ -226,7 +215,6 @@ export default {
       };
       const res = await getUser.getUser(param);
       const data = res.data.data.content;
-      this.myloadingvariable = false;
       this.items = data;
       this.pages = x;
       this.totalPage =
@@ -238,12 +226,10 @@ export default {
     async onPageChangeDetil(value) {
       await this.getUser(value);
     },
-    createFaq() {
-      this.openModalFaq = true;
-    },
   },
 };
 </script>
+
 <style scope>
 .btn-submit {
   color: white !important;

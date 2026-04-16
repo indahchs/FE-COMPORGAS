@@ -127,14 +127,6 @@ const routes = [
       },
       {
         path: "my-request/:id",
-        name: "ithelpdesk-my-request-detail",
-        component: () => import("@/views/ithelpdesksupport/components/TicketDetail.vue"),
-        meta: {
-          reqAuth: true,
-        },
-      },
-      {
-        path: "my-request/:id",
         name: "ithelpdesksupport-my-request-detail",
         component: () => import("@/views/ithelpdesksupport/components/TicketDetail.vue"),
         meta: {
@@ -222,7 +214,7 @@ const routes = [
     component: () => import("@/views/forms/FormLayouts.vue"),
   },
   {
-    path: "settings",
+    path: "/settings",
     name: "settings",
     component: () =>
       import("@/views/pages/account-settings/AccountSettings.vue"),
@@ -279,7 +271,7 @@ const routes = [
   },
   {
     path: "*",
-    redirect: "error-404",
+    redirect: "/notfound",
   },
 ];
 
@@ -289,7 +281,7 @@ const router = new VueRouter({
   routes,
 });
 
-//Navigation Guard
+// Navigation Guard
 router.beforeEach((to, from, next) => {
   const reqAuth = to.matched.some(r => r.meta.reqAuth);
   const reqLogout = to.matched.some(r => r.meta.reqLogout);

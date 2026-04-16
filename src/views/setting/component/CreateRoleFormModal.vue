@@ -5,14 +5,7 @@
         <v-card-title>
           <v-row align="center">
             <v-col>
-              <div
-                style="
-                  font-size: 18px;
-                  line-height: 28px;
-                  font-weight: 600;
-                  color: #000000;
-                "
-              >
+              <div style="font-size: 18px; line-height: 28px; font-weight: 600; color: #000000;">
                 {{ titleHead }} Role
               </div>
             </v-col>
@@ -33,10 +26,11 @@
               outlined
               placeholder="Role Name"
             ></v-text-field>
+            <label>Description</label>
             <v-text-field
               v-model="desc"
               outlined
-              label="Description"
+              placeholder="Description"
             ></v-text-field>
             <br />
             <v-btn :loading="loading" class="btn-submit" @click="submit">
@@ -48,6 +42,7 @@
     </v-dialog>
   </v-row>
 </template>
+
 <script>
 import { required } from "vuelidate/lib/validators";
 import { mdiClose, mdiFileDocumentOutline } from "@mdi/js";
@@ -55,13 +50,15 @@ import Swal from "sweetalert2";
 import RoleService from "@/services/management/role/roleServices";
 
 const getRole = RoleService.build();
+
 export default {
   data() {
     return {
+      titleHead: "Add",
       loading: false,
       role: "",
       desc: "",
-      idEdit: "",
+      idEdit: undefined,
       icons: {
         mdiFileDocumentOutline,
         mdiClose,
@@ -69,24 +66,28 @@ export default {
     };
   },
   validations: {
-    role: {
-      required,
-    },
+    role: { required },
   },
   props: {
     open: Boolean,
     datas: Object,
     statusDetail: String,
   },
-  created() {},
   computed: {
     isOpen: {
       get() {
-        this.idEdit = this.datas.id;
-        this.role = this.datas.name;
-        this.desc = this.datas.description;
-        this.titleHead = this.datas.name !== undefined ? "Edit" : "Add";
-
+        if (this.datas && this.datas.id !== undefined) {
+          this.titleHead = "Edit";
+          this.idEdit = this.datas.id;
+          this.role = this.datas.name;
+          this.desc = this.datas.description;
+        } else {
+          this.titleHead = "Add";
+          this.idEdit = undefined;
+          this.role = "";
+          this.desc = "";
+          this.$v.$reset();
+        }
         return this.open;
       },
       set(value) {
@@ -107,7 +108,6 @@ export default {
         default:
           break;
       }
-
       return errors;
     },
     async submit() {
@@ -119,59 +119,62 @@ export default {
           name: this.role,
           description: this.desc,
         };
-        const res =
-          this.idEdit === undefined
+
+        try {
+          const res = this.idEdit === undefined
             ? await getRole.postRole(param)
             : await getRole.editRole(param);
-        if (res.data.status === 200) {
-          Swal.fire({
-            icon: "success",
-            title: "Success",
-            text: res.data.message,
-            buttons: {
-              cancel: false,
-              confirm: true,
-              confirmButtonText: "Yes",
-              cancelButtonText: "No",
-            },
-            closeOnEsc: false,
-            closeOnClickOutside: false,
-          }).then((result) => {
-            if (result) {
+
+          if (res && res.data && res.data.status === 200) {
+            Swal.fire({
+              icon: "success",
+              title: "Success",
+              text: res.data.message,
+              showCancelButton: false,
+              showConfirmButton: true,
+              allowEscapeKey: false,
+              allowOutsideClick: false,
+            }).then((result) => {
+              if (result) {
+                this.loading = false;
+                this.close();
+              }
+            });
+          } else {
+            Swal.fire({
+              icon: "error",
+              title: "Failed",
+              text: res?.data?.message || "Terjadi kesalahan",
+              showCancelButton: false,
+              showConfirmButton: true,
+              allowEscapeKey: false,
+              allowOutsideClick: false,
+            }).then(() => {
               this.loading = false;
-              this.close();
-            }
-          });
-        } else {
+            });
+          }
+        } catch (error) {
+          this.loading = false;
           Swal.fire({
             icon: "error",
-            title: "Failed",
-            text:
-              res.data.errors !== null
-                ? res.data.errors[0].message
-                : res.data.message,
-            buttons: {
-              cancel: false,
-              confirm: true,
-            },
-            closeOnEsc: false,
-            closeOnClickOutside: false,
-          }).then((result) => {
-            if (result) {
-              this.loading = false;
-              this.close();
-            }
+            title: "Error",
+            text: "Terjadi kesalahan: " + error.message,
           });
         }
       }
     },
     close() {
+      this.role = "";
+      this.desc = "";
+      this.idEdit = undefined;
+      this.titleHead = "Add";
       this.$v.$reset();
       this.$emit("clicked");
     },
   },
 };
 </script>
+
 <style scope>
 .btn-submit {
   color: white !important;

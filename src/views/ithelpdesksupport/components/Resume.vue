@@ -87,7 +87,7 @@
     </v-dialog>
 
     <!-- Comparison Dialog -->
-    <v-dialog v-model="comparisonDialog" max-width="1200px" scrollable>
+    <v-dialog v-model="comparisonDialog" max-width="960px" scrollable>
       <v-card>
         <v-card-title class="primary white--text">
           <v-icon left color="white">{{ icons.mdiChartLine }}</v-icon>
@@ -97,35 +97,131 @@
             <v-icon>{{ icons.mdiClose }}</v-icon>
           </v-btn>
         </v-card-title>
+        <v-divider></v-divider>
         <v-card-text class="pt-4">
+
+          <!-- Period Label -->
+          <div class="d-flex align-center justify-center mb-5" style="gap: 10px;">
+            <div class="period-label prev-label">
+              <v-icon small class="mr-1">{{ icons.mdiCalendar }}</v-icon>
+              Previous: {{ comparisonData.previousPeriod }}
+            </div>
+            <v-icon small color="grey">{{ icons.mdiArrowRight }}</v-icon>
+            <div class="period-label curr-label">
+              <v-icon small class="mr-1">{{ icons.mdiCalendar }}</v-icon>
+              Current: {{ comparisonData.currentPeriod }}
+            </div>
+          </div>
+
+          <!-- Stat Cards -->
           <v-row>
-            <v-col cols="12" md="6">
-              <v-card outlined>
-                <v-card-subtitle>Previous Period</v-card-subtitle>
-                <v-card-text>
-                  <div v-for="stat in comparisonData.previous" :key="stat.name" class="d-flex justify-space-between mb-2">
-                    <span>{{ stat.name }}:</span>
-                    <strong>{{ stat.value }}</strong>
-                  </div>
-                </v-card-text>
-              </v-card>
-            </v-col>
-            <v-col cols="12" md="6">
-              <v-card outlined>
-                <v-card-subtitle>Current Period</v-card-subtitle>
-                <v-card-text>
-                  <div v-for="stat in comparisonData.current" :key="stat.name" class="d-flex justify-space-between mb-2">
-                    <span>{{ stat.name }}:</span>
-                    <strong>{{ stat.value }}</strong>
-                    <v-chip x-small :color="stat.change >= 0 ? 'success' : 'error'" dark>
-                      {{ stat.change >= 0 ? '+' : '' }}{{ stat.change }}%
+            <v-col
+              v-for="(stat, index) in comparisonData.stats"
+              :key="index"
+              cols="12" sm="6" md="4"
+            >
+              <v-card outlined elevation="1" class="comparison-stat-card">
+                <v-card-text class="pa-4">
+
+                  <!-- Header: icon + name + value + badge -->
+                  <div class="d-flex align-center mb-3">
+                    <v-avatar
+                      size="38"
+                      class="mr-3"
+                      style="background: white; border: 2px solid #e0e0e0;"
+                    >
+                      <v-icon :color="stat.change >= 0 ? 'success' : 'error'" small>
+                        {{ getStatIcon(stat.name) }}
+                      </v-icon>
+                    </v-avatar>
+                    <div>
+                      <div class="caption grey--text">{{ stat.name }}</div>
+                      <div class="text-h6 font-weight-bold">{{ stat.currentValue }}</div>
+                    </div>
+                    <v-spacer></v-spacer>
+                    <v-chip
+                      :color="stat.change >= 0 ? 'success' : 'error'"
+                      dark x-small
+                      class="font-weight-bold"
+                    >
+                      <v-icon left x-small>{{ stat.change >= 0 ? icons.mdiArrowUp : icons.mdiArrowDown }}</v-icon>
+                      {{ Math.abs(stat.change) }}%
                     </v-chip>
                   </div>
+
+                  <!-- Previous vs Current label -->
+                  <div class="d-flex justify-space-between caption grey--text mb-1">
+                    <span>Previous: {{ stat.previousValue }}</span>
+                    <span>Current: {{ stat.currentValue }}</span>
+                  </div>
+
+                  <!-- Previous bar -->
+                  <v-progress-linear
+                    :value="stat.previousPercent"
+                    color="grey lighten-1"
+                    height="6"
+                    rounded
+                    class="mb-1"
+                  ></v-progress-linear>
+
+                  <!-- Current bar -->
+                  <v-progress-linear
+                    :value="stat.currentPercent"
+                    :color="stat.change >= 0 ? 'success' : 'error'"
+                    height="6"
+                    rounded
+                  ></v-progress-linear>
+
+                  <!-- Trend text -->
+                  <div class="mt-2 text-caption text-center">
+                    <span v-if="stat.change > 0" class="success--text">
+                      ↑ Increased by {{ stat.change }}%
+                    </span>
+                    <span v-else-if="stat.change < 0" class="error--text">
+                      ↓ Decreased by {{ Math.abs(stat.change) }}%
+                    </span>
+                    <span v-else class="grey--text">No change</span>
+                  </div>
+
                 </v-card-text>
               </v-card>
             </v-col>
           </v-row>
+
+          <!-- Legend -->
+          <v-card flat color="grey lighten-4" class="mt-4">
+            <v-card-text class="pa-3">
+              <div class="d-flex align-center justify-space-around flex-wrap" style="gap: 8px;">
+                <div class="d-flex align-center">
+                  <span class="legend-dot grey-dot mr-2"></span>
+                  <span class="caption">Previous period</span>
+                </div>
+                <div class="d-flex align-center">
+                  <v-icon color="success" small class="mr-1">{{ icons.mdiArrowUp }}</v-icon>
+                  <span class="caption">Green = increase</span>
+                </div>
+                <div class="d-flex align-center">
+                  <v-icon color="error" small class="mr-1">{{ icons.mdiArrowDown }}</v-icon>
+                  <span class="caption">Red = decrease</span>
+                </div>
+                <v-chip x-small outlined>
+                  <v-icon left x-small>{{ icons.mdiInformationOutline }}</v-icon>
+                  {{ currentPeriodText }}
+                </v-chip>
+              </div>
+            </v-card-text>
+          </v-card>
+
         </v-card-text>
+        <v-divider></v-divider>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn text color="grey darken-1" @click="comparisonDialog = false">Close</v-btn>
+          <v-btn color="primary" @click="refreshComparison" :loading="isLoading">
+            <v-icon left small>{{ icons.mdiRefresh }}</v-icon>
+            Refresh
+          </v-btn>
+        </v-card-actions>
       </v-card>
     </v-dialog>
 
@@ -153,13 +249,13 @@
             <v-col cols="6" sm="4" md="2" class="pa-1 pa-sm-2">
               <v-btn block color="primary" @click="refreshAllData" :loading="isLoading" big>
                 <v-icon left small>{{ icons.mdiRefresh }}</v-icon>
-                <span class="hidden-xs-only">Refresh</span>
+                <span class="hidden-xxs-only">Refresh</span>
               </v-btn>
             </v-col>
             <v-col cols="6" sm="4" md="2" class="pa-1 pa-sm-2">
               <v-btn block color="success" @click="exportToExcel" :loading="exporting" big>
                 <v-icon left small>{{ icons.mdiDownload }}</v-icon>
-                <span class="hidden-xs-only">Export</span>
+                <span class="hidden-xxs-only">Export</span>
               </v-btn>
             </v-col>
             <v-col cols="6" sm="4" md="2" class="pa-1 pa-sm-2">
@@ -171,7 +267,7 @@
             <v-col cols="6" sm="4" md="2" class="pa-1 pa-sm-2">
               <v-btn block color="purple" dark @click="showComparison" big>
                 <v-icon left small>{{ icons.mdiChartLine }}</v-icon>
-                <span class="hidden-xs-only">Compare</span>
+                <span class="hidden-xxs-only">Compare</span>
               </v-btn>
             </v-col>
           </v-row>
@@ -270,7 +366,7 @@
             <span class="text-subtitle-1 text-sm-h6">{{ titleHeader || 'Ticket List' }}</span>
             <v-chip class="ml-2" small outlined color="primary">{{ currentPeriodText }}</v-chip>
           </div>
-          <v-spacer class="hidden-xs-only"></v-spacer>
+          <v-spacer class="hidden-xxs-only"></v-spacer>
           <v-text-field v-model="search" append-icon="mdi-magnify" label="Search" single-line hide-details clearable outlined dense class="mt-2 mt-sm-0" style="max-width: 400px"></v-text-field>
         </v-card-title>
         <v-card-text class="pa-0 pa-sm-2">
@@ -319,7 +415,8 @@ import {
   mdiClipboardAlertOutline, mdiLoading, mdiCheckDecagramOutline, mdiMagnify, mdiCheck,
   mdiCheckAll, mdiArrowLeft, mdiRefresh, mdiDownload, mdiTable, mdiChartBar,
   mdiEye, mdiClose, mdiPencil, mdiCalendar, mdiMapMarker, mdiChartLine,
-  mdiClockOutline, mdiAccount, mdiShape,
+  mdiClockOutline, mdiAccount, mdiShape, mdiArrowUp, mdiArrowDown,
+  mdiInformationOutline, mdiTrendingUp, mdiTrendingDown,
 } from "@mdi/js";
 import moment from "moment";
 import ItHelpDeskService from "@/services/ithelpdesk/itHelpDeskServices";
@@ -336,7 +433,11 @@ export default {
       search: "", detailDialog: false, comparisonDialog: false,
       selectedTicket: null, currentFilter: null, statusFilter: null,
       snackbar: { show: false, message: "", color: "success" },
-      comparisonData: { previous: [], current: [] },
+      comparisonData: {
+        previousPeriod: "",
+        currentPeriod: "",
+        stats: []
+      },
       globalYear: new Date().getFullYear(),
       globalMonth: new Date().getMonth() + 1,
       monthList: [
@@ -351,6 +452,7 @@ export default {
         mdiCheckDecagramOutline, mdiMagnify, mdiCheck, mdiCheckAll, mdiRefresh,
         mdiDownload, mdiTable, mdiChartBar, mdiEye, mdiClose, mdiPencil,
         mdiCalendar, mdiMapMarker, mdiChartLine, mdiClockOutline, mdiAccount, mdiShape,
+        mdiArrowUp, mdiArrowDown, mdiInformationOutline, mdiTrendingUp, mdiTrendingDown,
       },
       allTickets: 0, assignedTickets: 0, progressTickets: 0,
       pendingTickets: 0, lateTickets: 0, solvedTickets: 0,
@@ -648,42 +750,114 @@ export default {
       this.$router.push({ name: "ithelpdesksupport-my-request-detail", params: { id: ticket.id } });
     },
 
-    // Comparison 
+    getStatIcon(statName) {
+  const iconMap = {
+    "All":      this.icons.mdiTicketConfirmationOutline,
+    "Assigned": this.icons.mdiClipboardArrowRightOutline,
+    "Progress": this.icons.mdiLoading,
+    "Pending":  this.icons.mdiClipboardTextClockOutline,
+    "Late":     this.icons.mdiClipboardAlertOutline,
+    "Solved":   this.icons.mdiCheckDecagramOutline,
+  };
+  return iconMap[statName] || this.icons.mdiChartLine;
+},
+
+    // Comparison - IMPROVED VERSION
     async showComparison() {
       this.isLoading = true;
       try {
+        // Calculate previous period
         let prevYear = this.globalYear, prevMonth = this.globalMonth - 1;
-        if (prevMonth === 0) { prevMonth = 12; prevYear -= 1; }
-        const prev = { year: prevYear, month: prevMonth };
-        const [pAll, pAssigned, pProgress, pPending, pLate, pSolved] = await Promise.all([
-          dashboardService.getAllTicketsCount(prev), dashboardService.getTicketAssignedCount(prev),
-          dashboardService.getTicketInProgressCount(prev), dashboardService.getTicketPendingCount(prev),
-          dashboardService.getTicketLateCount(prev), dashboardService.getTicketResolvedCount(prev),
+        if (prevMonth === 0) { 
+          prevMonth = 12; 
+          prevYear -= 1; 
+        }
+        
+        const prevPeriod = { year: prevYear, month: prevMonth };
+        const currentPeriod = { year: this.globalYear, month: this.globalMonth };
+        
+        // Set period display names
+        this.comparisonData.previousPeriod = this.getPeriodName(prevYear, prevMonth);
+        this.comparisonData.currentPeriod = this.getPeriodName(this.globalYear, this.globalMonth);
+        
+        // Fetch previous period data
+        const [pAll, pAssigned, pProgress, pPending, pSolved] = await Promise.all([
+          dashboardService.getAllTicketsCount(prevPeriod),
+          dashboardService.getTicketAssignedCount(prevPeriod),
+          dashboardService.getTicketInProgressCount(prevPeriod),
+          dashboardService.getTicketPendingCount(prevPeriod),
+          dashboardService.getTicketResolvedCount(prevPeriod),
         ]);
-        const pd = {
-          all: pAll.data.data || 0, assigned: pAssigned.data.data || 0,
-          progress: pProgress.data.data || 0, pending: pPending.data.data || 0,
-          late: pLate.data.data || 0, solved: pSolved.data.data || 0,
+        
+        // Fetch late tickets for previous period (client-side calculation)
+        let pLate = 0;
+        try {
+          const res = await getTicket.getTicketPic({ status: null, size: 1000, page: 0 });
+          const data = (res.data.data.content || []).filter(item => {
+            const d = moment(item.createdAt);
+            return d.year() === prevYear && (d.month() + 1) === prevMonth;
+          });
+          pLate = data.filter(i => this.isLate(i)).length;
+        } catch { pLate = 0; }
+        
+        const prevValues = {
+          all: pAll.data.data || 0,
+          assigned: pAssigned.data.data || 0,
+          progress: pProgress.data.data || 0,
+          pending: pPending.data.data || 0,
+          late: pLate,
+          solved: pSolved.data.data || 0
         };
-        this.comparisonData.previous = [
-          { name: "All", value: pd.all }, { name: "Assigned", value: pd.assigned },
-          { name: "Progress", value: pd.progress }, { name: "Pending", value: pd.pending },
-          { name: "Late", value: pd.late }, { name: "Solved", value: pd.solved },
-        ];
-        this.comparisonData.current = [
-          { name: "All",      value: this.allTickets,      change: this.calculateChange(pd.all,      this.allTickets) },
-          { name: "Assigned", value: this.assignedTickets, change: this.calculateChange(pd.assigned, this.assignedTickets) },
-          { name: "Progress", value: this.progressTickets, change: this.calculateChange(pd.progress, this.progressTickets) },
-          { name: "Pending",  value: this.pendingTickets,  change: this.calculateChange(pd.pending,  this.pendingTickets) },
-          { name: "Late",     value: this.lateTickets,     change: this.calculateChange(pd.late,     this.lateTickets) },
-          { name: "Solved",   value: this.solvedTickets,   change: this.calculateChange(pd.solved,   this.solvedTickets) },
-        ];
+        
+        const currentValues = {
+          all: this.allTickets,
+          assigned: this.assignedTickets,
+          progress: this.progressTickets,
+          pending: this.pendingTickets,
+          late: this.lateTickets,
+          solved: this.solvedTickets
+        };
+        
+        const maxValue = Math.max(
+          ...Object.values(prevValues),
+          ...Object.values(currentValues)
+        );
+        
+        // Build stats array
+        const statNames = ["All", "Assigned", "Progress", "Pending", "Late", "Solved"];
+        this.comparisonData.stats = statNames.map(name => {
+          const key = name.toLowerCase();
+          const previousValue = prevValues[key];
+          const currentValue = currentValues[key];
+          const change = this.calculateChange(previousValue, currentValue);
+          
+          return {
+            name: name,
+            previousValue: previousValue,
+            currentValue: currentValue,
+            change: change,
+            percentage: maxValue > 0 ? (currentValue / maxValue) * 100 : 0,
+            previousPercent: maxValue > 0 ? (previousValue / maxValue) * 100 : 0,
+            currentPercent: maxValue > 0 ? (currentValue / maxValue) * 100 : 0
+          };
+        });
+        
         this.comparisonDialog = true;
       } catch (e) {
-        this.showSnackbar("Error loading comparison", "error");
+        console.error("Comparison error:", e);
+        this.showSnackbar("Error loading comparison data", "error");
       } finally {
         this.isLoading = false;
       }
+    },
+    
+    getPeriodName(year, month) {
+      const monthName = this.monthList.find(m => m.value === month)?.name || "";
+      return `${monthName} ${year}`;
+    },
+    
+    async refreshComparison() {
+      await this.showComparison();
     },
 
     calculateChange(oldVal, newVal) {
@@ -827,4 +1001,35 @@ export default {
 .table-wrapper   { overflow-x: auto; width: 100%; }
 .row-pointer >>> tbody tr { cursor: pointer; }
 .row-pointer >>> tbody tr:hover { background-color: #f5f5f5; }
+
+.comparison-stat-card {
+  border-radius: 10px;
+}
+
+.period-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  background: #f5f5f5;
+  color: #555;
+}
+
+.curr-label {
+  background: #e3f2fd;
+  color: #0d47a1;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.grey-dot {
+  background: #bdbdbd;
+}
 </style>

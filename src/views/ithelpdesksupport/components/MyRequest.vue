@@ -187,10 +187,12 @@ export default {
     },
 
     isLate(item) {
-      if (item.statusId === "RESOLVED") return false;
-      const slaHours = this.catalogSlaMap[item.catalogName] || 0;
-      return slaHours > 0 && moment().diff(moment(item.createdAt), "hours") > slaHours;
-    },
+  if (item.statusId === "RESOLVED") return false;
+  const slaHours = this.catalogSlaMap[item.catalogName] || 0;
+  const elapsed  = moment().diff(moment(item.createdAt), "hours"); 
+  console.log(`${item.catalogName} - elapsed: ${elapsed}h, sla: ${slaHours}h`); 
+  return slaHours > 0 && elapsed > slaHours;
+},
 
     chipClass(item) {
       if (item.isLate && item.statusId !== "RESOLVED") return "status-late";

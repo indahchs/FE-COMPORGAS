@@ -249,7 +249,7 @@
 
               <v-file-input v-model="selectedFiles" label="Select Photos" multiple accept="image/*" outlined
                 prepend-icon="" :prepend-inner-icon="icons.mdiCamera" show-size
-                :rules="[v => (v && v.length > 0) || 'Please select at least one photo']"></v-file-input>
+                :rules="[v => (v && v.length > 0) || 'Max 1 image and max 5 MB']"></v-file-input>
 
               <div v-if="uploading" class="mt-4">
                 <v-divider class="mb-3"></v-divider>
@@ -932,8 +932,18 @@ export default {
         for (let i = 0; i < this.selectedFiles.length; i++) {
           const file = this.selectedFiles[i]
 
+          // SESUDAH
           this.uploadProgress.currentFile       = file
           this.uploadProgress.files[i].status   = 'uploading'
+
+          if (file.size > 5000000) {
+            this.uploadProgress.files[i].status = 'failed'
+            this.uploadProgress.failed++
+            this.uploadProgress.current = i + 1
+            this.updateUploadProgress()
+            this.showError(`File "${file.name}" exceeds the 5MB limit!`)
+            continue
+          }
 
           try {
             const formData = new FormData()

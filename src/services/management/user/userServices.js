@@ -3,29 +3,46 @@ import HttpService from "../../base/HttpService";
 export default class UserService extends HttpService {
   static api = process.env.VUE_APP_PERTAGAS;
 
-  getUser(param, data) {
+  getUser(param) {
     const api = this.api + "system/user";
-
     return this.get(param, api);
   }
-  getDetailUser(param, data) {
-    const api = this.api + "system/user";
 
+  getDetailUser(param) {
+    const api = this.api + "system/user";
     return this.get(param, api);
   }
-  postUser(param, data) {
+
+  postUser(param) {
     const api = this.api + "system/user";
-
-    return this.post(param, api);
+    const token = localStorage.getItem("token");
+    return this.http.post(api, param, {
+      headers: {
+        "x-app-token": token,
+        "Content-Type": "application/json",
+      },
+    });
   }
-  editUser(param, data) {
+
+  editUser(param) {
     const api = this.api + "system/user";
-
-    return this.put(param, api);
+    const token = localStorage.getItem("token");
+    return this.http.put(api, param, {
+      headers: {
+        "x-app-token": token,
+        "Content-Type": "application/json",
+      },
+    });
   }
-  deleteUser(param, data) {
-    const api = this.api + "system/user/" + param;
 
-    return this.deleteV2("", api);
+  deleteUser(id) {
+    const api = this.api + "system/user/" + id;
+    const token = localStorage.getItem("token");
+    return this.http.delete(api, {
+      headers: {
+        "x-app-token": token,
+        "Content-Type": "application/json",
+      },
+    });
   }
 }

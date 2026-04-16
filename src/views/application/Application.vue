@@ -418,17 +418,30 @@ export default {
     
     filteredTableApps() {
       let filtered = [...this.flattenedApps];
-      
+
+      // Filter by category
+      if (this.selectedCategory) {
+        filtered = filtered.filter(app => app.category === this.selectedCategory);
+      }
+
+      // Filter by link status
       if (this.linkFilter === "active") {
-        filtered = filtered.filter(app => 
+        filtered = filtered.filter(app =>
           app.link && typeof app.link === 'string' && app.link.trim() !== ''
         );
       } else if (this.linkFilter === "inactive") {
-        filtered = filtered.filter(app => 
+        filtered = filtered.filter(app =>
           !app.link || typeof app.link !== 'string' || app.link.trim() === ''
         );
       }
-      
+
+      // Sort
+      if (this.sortBy === "name") {
+        filtered.sort((a, b) => a.name.localeCompare(b.name));
+      } else if (this.sortBy === "category") {
+        filtered.sort((a, b) => a.category.localeCompare(b.category));
+      }
+
       return filtered;
     },
     
@@ -515,12 +528,24 @@ export default {
           categoryData[category.name] = category.apps.length;
         }
       });
-      
-      this.pieChartOptions.labels = Object.keys(categoryData);
-      this.pieChartSeries = Object.values(categoryData);
-      
-      this.barChartOptions.xaxis.categories = Object.keys(categoryData);
-      this.barChartSeries[0].data = Object.values(categoryData);
+
+      const labels = Object.keys(categoryData);
+      const values = Object.values(categoryData);
+
+      this.pieChartOptions = {
+        ...this.pieChartOptions,
+        labels: labels,
+      };
+      this.pieChartSeries = values;
+
+      this.barChartOptions = {
+        ...this.barChartOptions,
+        xaxis: {
+          ...this.barChartOptions.xaxis,
+          categories: labels,
+        },
+      };
+      this.barChartSeries = [{ name: "Apps", data: values }];
     },
     
     filterByCategory(filter) {

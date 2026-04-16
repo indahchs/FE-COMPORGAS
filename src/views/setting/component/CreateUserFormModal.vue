@@ -5,14 +5,7 @@
         <v-card-title>
           <v-row align="center">
             <v-col>
-              <div
-                style="
-                  font-size: 18px;
-                  line-height: 28px;
-                  font-weight: 600;
-                  color: #000000;
-                "
-              >
+              <div style="font-size: 18px; line-height: 28px; font-weight: 600; color: #000000;">
                 {{ titleHead }} User
               </div>
             </v-col>
@@ -25,24 +18,41 @@
         </v-card-title>
         <v-card-text>
           <form @submit.prevent="submit">
+            <label class="required">Employee Name</label>
             <v-text-field
               v-model="name"
               outlined
-              disabled
-              label="Employee Name"
+              :disabled="false"
+              placeholder="Input Employee Name"
             ></v-text-field>
+
+            <label :class="isAdd ? 'required' : ''">Email</label>
             <v-text-field
-              disabled
               v-model="email"
               outlined
-              label="Email"
+              :disabled="!isAdd"
+              placeholder="Input Email"
             ></v-text-field>
+
+            <label>Bidang</label>
             <v-text-field
-              disabled
               v-model="title"
               outlined
-              label="Bidang"
+              placeholder="Input Bidang"
             ></v-text-field>
+
+            <template v-if="isAdd">
+              <label class="required">Password</label>
+              <v-text-field
+                v-model="password"
+                outlined
+                :type="showPassword ? 'text' : 'password'"
+                :append-icon="showPassword ? icons.mdiEye : icons.mdiEyeOff"
+                @click:append="showPassword = !showPassword"
+                placeholder="Input Password"
+              ></v-text-field>
+            </template>
+
             <label class="required">Role</label>
             <v-select
               v-model="roleId"
@@ -60,8 +70,9 @@
     </v-dialog>
   </v-row>
 </template>
+
 <script>
-import { mdiClose, mdiFileDocumentOutline } from "@mdi/js";
+import { mdiClose, mdiFileDocumentOutline, mdiEye, mdiEyeOff } from "@mdi/js";
 import Swal from "sweetalert2";
 import UserService from "@/services/management/user/userServices";
 import RoleService from "@/services/management/role/roleServices";
@@ -73,18 +84,23 @@ export default {
   data() {
     return {
       isAdd: true,
+      titleHead: "Add",
       loading: false,
       name: "",
       email: "",
       title: "",
+      password: "",
+      showPassword: false,
       roleId: "",
       idEdit: "",
-      ldpa: false,
+      ldap: false,
       active: false,
       roleOpt: [],
       icons: {
         mdiFileDocumentOutline,
         mdiClose,
+        mdiEye,
+        mdiEyeOff,
       },
     };
   },
@@ -93,19 +109,31 @@ export default {
     datas: Object,
     statusDetail: String,
   },
-  created() {},
   computed: {
     isOpen: {
       get() {
-        this.idEdit = this.datas.id;
-        this.name = this.datas.fullName;
-        this.title = this.datas.title;
-        this.roleId = this.datas.roleId;
-        this.active = this.datas.active;
-        this.ldap = this.datas.ldap;
-        this.email = this.datas.email;
-        this.titleHead = this.datas.fullName !== undefined ? "Edit" : "Add";
-        this.isAdd = this.datas.fullName !== undefined ? false : true;
+        if (this.datas && this.datas.id !== undefined) {
+          this.isAdd = false;
+          this.titleHead = "Edit";
+          this.idEdit = this.datas.id;
+          this.name = this.datas.fullName;
+          this.title = this.datas.title;
+          this.roleId = this.datas.roleId;
+          this.active = this.datas.active;
+          this.ldap = this.datas.ldap;
+          this.email = this.datas.email;
+        } else {
+          this.isAdd = true;
+          this.titleHead = "Add";
+          this.idEdit = undefined;
+          this.name = "";
+          this.email = "";
+          this.title = "";
+          this.password = "";
+          this.roleId = "";
+          this.active = true;
+          this.ldap = false;
+        }
         this.getRole();
         return this.open;
       },
@@ -120,21 +148,59 @@ export default {
     async getRole() {
       const res = await getRole.getRoleOpt();
       const data = res.data.data;
-      const filter = data.map((project) => ({
+      this.roleOpt = data.map((project) => ({
         value: project.value,
         text: project.label,
       }));
-      this.roleOpt = filter;
     },
     async submit() {
+      if (this.isAdd) {
+        if (!this.name || !this.email || !this.password || !this.roleId) {
+          Swal.fire({
+            icon: "warning",
+            title: "Peringatan",
+            text: "Harap lengkapi semua field yang wajib diisi.",
+          });
+          return;
+        }
+        if (this.name.length < 5) {
+          Swal.fire({
+            icon: "warning",
+            title: "Peringatan",
+            text: "Nama Lengkap harus minimal 5 karakter.",
+          });
+          return;
+        }
+        if (this.email.length < 5) {
+          Swal.fire({
+            icon: "warning",
+            title: "Peringatan",
+            text: "Email harus minimal 5 karakter.",
+          });
+          return;
+        }
+      } else {
+        if (!this.roleId) {
+          Swal.fire({
+            icon: "warning",
+            title: "Peringatan",
+            text: "Role wajib dipilih.",
+          });
+          return;
+        }
+      }
+
       this.loading = true;
+
       const param = {
         email: this.email,
         active: true,
         fullName: this.name,
         title: this.title,
         roleId: this.roleId,
+        password: this.password,
       };
+
       const paramEdit = {
         id: this.idEdit,
         ldap: this.ldap,
@@ -143,120 +209,67 @@ export default {
         title: this.title,
         roleId: this.roleId,
       };
-      const res =
-        this.idEdit === undefined
+
+      try {
+        const res = this.isAdd
           ? await getUser.postUser(param)
           : await getUser.editUser(paramEdit);
-      if (res.data.status === 200) {
-        Swal.fire({
-          icon: "success",
-          title: "Success",
-          text: res.data.message,
-          buttons: {
-            cancel: false,
-            confirm: true,
-            confirmButtonText: "Yes",
-            cancelButtonText: "No",
-          },
-          closeOnEsc: false,
-          closeOnClickOutside: false,
-        }).then((result) => {
-          if (result) {
+
+        if (res && res.data && res.data.status === 200) {
+          Swal.fire({
+            icon: "success",
+            title: "Success",
+            text: res.data.message,
+            showCancelButton: false,
+            showConfirmButton: true,
+            allowEscapeKey: false,
+            allowOutsideClick: false,
+          }).then((result) => {
+            if (result) {
+              this.loading = false;
+              this.close();
+            }
+          });
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Failed",
+            text: res?.data?.message || "Terjadi kesalahan",
+            showCancelButton: false,
+            showConfirmButton: true,
+            allowEscapeKey: false,
+            allowOutsideClick: false,
+          }).then(() => {
             this.loading = false;
-            this.close();
-          }
-        });
-      } else {
+          });
+        }
+      } catch (error) {
+        this.loading = false;
         Swal.fire({
           icon: "error",
-          title: "Failed",
-          text:
-            res.data.errors !== null
-              ? res.data.errors[0].message
-              : res.data.message,
-          buttons: {
-            cancel: false,
-            confirm: true,
-          },
-          closeOnEsc: false,
-          closeOnClickOutside: false,
-        }).then((result) => {
-          if (result) {
-            this.loading = false;
-            this.close();
-          }
+          title: "Error",
+          text: "Terjadi kesalahan: " + error.message,
         });
       }
-    },
-    deleteImage() {
-      this.$refs.uploader.value = "";
-      this.inputText = "";
-      this.imgUpload = null;
-      this.selectedFile1 = null;
-      this.isSelecting = false;
-    },
-    successPopup(val) {
-      Swal.fire({
-        title: "Success",
-        text: val,
-        icon: "success",
-        button: false,
-        timer: 2000,
-      });
-    },
-    errorPopup(val) {
-      Swal.fire({
-        title: "Failed",
-        text: val,
-        icon: "error",
-        button: false,
-        timer: 2000,
-      });
-    },
-    onFileChanged(e) {
-      this.selectedFile = e.target.files[0];
-      this.inputText = e.target.files[0].name;
-      if (e.target.files[0].size > 5000000) {
-        this.errorPopup("File upload exceeds the 5MB limit!");
-      } else if (
-        e.target.files[0].type === "image/png" ||
-        e.target.files[0].type === "image/jpeg" ||
-        e.target.files[0].type === "image/jpg"
-      ) {
-        this.imgUpload = URL.createObjectURL(e.target.files[0]);
-        this.selectedFile1 = e.target.files[0];
-        this.inputText = e.target.files[0].name;
-      } else {
-        this.errorPopup("Unsupported Image File");
-      }
-
-      // do something
-    },
-    onButtonClick(x) {
-      this.idBtn = x;
-      this.isSelecting = true;
-      window.addEventListener(
-        "focus",
-        () => {
-          this.isSelecting = false;
-        },
-        { once: true }
-      );
-      this.$refs.uploader.click();
     },
     close() {
       this.idEdit = "";
       this.name = "";
+      this.email = "";
       this.title = "";
+      this.password = "";
+      this.showPassword = false;
       this.roleId = "";
       this.active = "";
       this.ldap = "";
-      this.email = "";
+      this.isAdd = true;
+      this.titleHead = "Add";
       this.$emit("clicked");
     },
   },
 };
 </script>
+
 <style scope>
 .btn-submit {
   color: white !important;
