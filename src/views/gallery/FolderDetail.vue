@@ -297,7 +297,7 @@
             <v-spacer></v-spacer>
             <v-btn text @click="closeUploadDialog" :disabled="uploading">Cancel</v-btn>
             <v-btn color="primary" @click="uploadPhotos" :loading="uploading" :disabled="!uploadFormValid || uploading">
-              <span v-if="!uploading">Upload {{ selectedFiles.length }} Photo(s)</span>
+              <span v-if="!uploading">Upload Photo</span>
               <span v-else>Uploading... ({{ uploadProgress.current }}/{{ uploadProgress.total }})</span>
             </v-btn>
           </v-card-actions>

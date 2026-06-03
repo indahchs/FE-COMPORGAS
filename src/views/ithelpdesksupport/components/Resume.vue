@@ -1,12 +1,6 @@
 <template>
   <div class="resume-container">
-    <!-- Loading Overlay -->
-    <v-overlay :value="isLoading" z-index="999">
-      <v-progress-circular indeterminate size="64" color="primary"></v-progress-circular>
-      <p class="mt-4 white--text">Loading data...</p>
-    </v-overlay>
-
-    <!-- Snackbar -->
+  <!-- Snackbar -->
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000" top right>
       {{ snackbar.message }}
       <template v-slot:action="{ attrs }">
@@ -79,8 +73,8 @@
           <v-spacer></v-spacer>
           <v-btn color="grey darken-1" text @click="detailDialog = false">Close</v-btn>
           <v-btn color="primary" @click="editTicket(selectedTicket)">
-            <v-icon left small>{{ icons.mdiPencil }}</v-icon>
-            Edit
+            <v-icon left small>{{ icons.mdiEye }}</v-icon>
+            Detail
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -100,7 +94,7 @@
         <v-divider></v-divider>
         <v-card-text class="pt-4">
 
-          <!-- Period Label -->
+          <!-- Chip Period Label -->
           <div class="d-flex align-center justify-center mb-5" style="gap: 10px;">
             <div class="period-label prev-label">
               <v-icon small class="mr-1">{{ icons.mdiCalendar }}</v-icon>
@@ -122,8 +116,6 @@
             >
               <v-card outlined elevation="1" class="comparison-stat-card">
                 <v-card-text class="pa-4">
-
-                  <!-- Header: icon + name + value + badge -->
                   <div class="d-flex align-center mb-3">
                     <v-avatar
                       size="38"
@@ -496,12 +488,16 @@ export default {
       return `${monthName} ${this.globalYear}`;
     },
     slaPerformanceColor() {
-      if (!this.seriesStack[0].data.length) return "grey";
-      const avg   = this.seriesStack[0].data.reduce((a, b) => a + b, 0) / this.seriesStack[0].data.length;
-      const max   = Math.max(...this.seriesStack[1].data);
-      const ratio = avg / max;
-      if (ratio < 0.5)  return "success";
-      if (ratio < 0.75) return "warning";
+      const avgSlaData    = this.seriesStack[0].data;
+      const slaTargetData = this.seriesStack[1].data;
+
+      if (!avgSlaData.length) return "grey";
+
+      const onTimeCount = avgSlaData.filter((avg, i) => avg <= slaTargetData[i]).length;
+      const ratio = onTimeCount / avgSlaData.length;
+
+      if (ratio >= 0.8) return "success";
+      if (ratio >= 0.5) return "warning";
       return "error";
     },
     slaPerformanceText() {
@@ -762,7 +758,7 @@ export default {
   return iconMap[statName] || this.icons.mdiChartLine;
 },
 
-    // Comparison - IMPROVED VERSION
+    // Comparison
     async showComparison() {
       this.isLoading = true;
       try {

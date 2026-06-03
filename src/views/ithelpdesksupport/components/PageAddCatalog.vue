@@ -151,7 +151,7 @@
         <v-spacer></v-spacer>
 
         <v-btn class="btn-submit" @click="createPic" depressed
-          >CREATE PIC</v-btn
+          >CREATE</v-btn
         >
       </v-card-title>
       <v-card-text class="mt-6">

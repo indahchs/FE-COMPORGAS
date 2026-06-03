@@ -277,7 +277,7 @@ export default {
       return this.upcomingEventsFromApi
         .filter(event => moment(event.eventDate).isSameOrAfter(today, 'day'))
         .sort((a, b) => moment(a.eventDate).diff(moment(b.eventDate)))
-        .slice(0, 3);
+        .slice(0, 4);
     },
     filteredUpcomingEvents() {
       return this.upcomingEvents;
