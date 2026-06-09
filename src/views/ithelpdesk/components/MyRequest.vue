@@ -198,7 +198,7 @@ export default {
   },
 
   methods: {
-    // ─── SLA Helpers ───────────────────────────────────────────────
+    // SLA Helpers 
     async loadCatalogSlaMap() {
       try {
         const res      = await getTicket.getHelpDeskPage({ size: 100, page: 0 });
@@ -220,7 +220,7 @@ export default {
       return ageHours > slaTotalHours;
     },
 
-    // ─── Data Fetching ─────────────────────────────────────────────
+    // Data Fetching
     async getCatalog() {
       try {
         const res    = await catalogService.getAllOptions();
@@ -260,7 +260,7 @@ export default {
       }
     },
 
-    // ─── Actions ───────────────────────────────────────────────────
+    // Actions
     async onPageChangeDetil(value) {
       await this.getTicket(value);
     },
@@ -281,7 +281,7 @@ export default {
       }
     },
 
-    // ─── Helpers ───────────────────────────────────────────────────
+    // Helpers
     formatDate(x) {
       return moment(x).format("DD-MM-YYYY");
     },

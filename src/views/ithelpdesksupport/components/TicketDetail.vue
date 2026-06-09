@@ -171,7 +171,7 @@
             </v-timeline-item>
           </v-timeline>
 
-          <!-- Dispatch Note hanya tampil jika sudah pernah dispatch dan ada note -->
+          // Dispatch Note hanya tampil jika sudah pernah dispatch dan ada note
           <div class="dispatch-note-box mt-6" v-if="isValidDispatchNote">
             <div class="dispatch-note-header">
               <v-icon small color="#0172b9" class="mr-1">{{ icons.mdiInformationOutline }}</v-icon>
@@ -381,6 +381,7 @@ export default {
     this.timer = setInterval(() => {
       if (this.dataClick.id) {
         this.getChat(this.dataClick.id);
+        this.getTimeline(this.dataClick.id);
       }
     }, 2000);
   },

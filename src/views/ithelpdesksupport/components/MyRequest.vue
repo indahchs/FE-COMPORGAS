@@ -94,6 +94,7 @@ import HelpdeskFormModal from "./HelpdeskFormModal.vue";
 import ItHelpDeskService from "@/services/ithelpdesk/itHelpDeskServices";
 import HelpdeskDashboardService from "@/services/helpdeskdashboard/helpdeskDashboardServices";
 import CatalogService from "@/services/catalog/catalogServices";
+import * as XLSX from "xlsx";
 import Swal from "sweetalert2";
 import {
   mdiTicketConfirmationOutline, mdiClipboardTextClockOutline, mdiClipboardArrowRightOutline,
@@ -187,12 +188,12 @@ export default {
     },
 
     isLate(item) {
-  if (item.statusId === "RESOLVED") return false;
-  const slaHours = this.catalogSlaMap[item.catalogName] || 0;
-  const elapsed  = moment().diff(moment(item.createdAt), "hours"); 
-  console.log(`${item.catalogName} - elapsed: ${elapsed}h, sla: ${slaHours}h`); 
-  return slaHours > 0 && elapsed > slaHours;
-},
+      if (item.statusId === "RESOLVED") return false;
+      const slaHours = this.catalogSlaMap[item.catalogName] || 0;
+      const elapsed  = moment().diff(moment(item.createdAt), "hours"); 
+      console.log(`${item.catalogName} - elapsed: ${elapsed}h, sla: ${slaHours}h`); 
+      return slaHours > 0 && elapsed > slaHours;
+    },
 
     chipClass(item) {
       if (item.isLate && item.statusId !== "RESOLVED") return "status-late";
@@ -271,7 +272,6 @@ export default {
       } catch { this.lateTickets = 0; }
     },
 
-    //  Aksi 
     filterByStatus(status) { this.status = status; this.page = 1; this.loadTickets(); },
 
     viewDetail(ticket) {
@@ -288,6 +288,38 @@ export default {
     async downloadExcel() {
       this.exportLoading = true;
       try {
+        if (this.status === "LATE") {
+          const res = await svc.getTicketPic({ status: null, size: 1000, page: 0 });
+          let data  = (res.data.data.content || []).filter(i => this.isLate(i));
+
+          if (this.keyword)   { const kw = this.keyword.toLowerCase(); data = data.filter(i => (i.title + i.number + i.userName).toLowerCase().includes(kw)); }
+          if (this.catalogId) data = data.filter(i => i.catalogId === this.catalogId);
+          if (this.startDate) data = data.filter(i => moment(i.createdAt).isSameOrAfter(moment(this.startDate), "day"));
+          if (this.endDate)   data = data.filter(i => moment(i.createdAt).isSameOrBefore(moment(this.endDate), "day"));
+
+          if (!data.length) return;
+
+          const rows = data.map(i => ({
+            "Name":     i.userName    ?? "",
+            "PIC":      i.picName     ?? "",
+            "Ticket":   i.number      ?? "",
+            "Date":     moment(i.createdAt).format("DD-MM-YYYY"),
+            "Title":    i.title       ?? "",
+            "Catalog":  i.catalogName ?? "",
+            "Location": i.officeName  ?? "",
+            "Status":   "Late",
+          }));
+
+          const ws = XLSX.utils.json_to_sheet(rows);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, "Tickets");
+          ws["!cols"] = Object.keys(rows[0]).map(key => ({
+            wch: Math.max(key.length, ...rows.map(r => String(r[key]).length)) + 2,
+          }));
+          XLSX.writeFile(wb, `Ticket-Late-${moment().format("DD-MM-YYYY")}.xlsx`);
+          return;
+        }
+
         const res  = await svc.export({
           keyword:   this.keyword,
           catalog:   this.catalogId,
@@ -302,7 +334,6 @@ export default {
       } catch (e) { console.error(e); }
       finally { this.exportLoading = false; }
     },
-
     // Delete
     openDeleteConfirm(item) {
       Swal.fire({

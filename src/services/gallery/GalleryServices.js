@@ -25,6 +25,11 @@ class GalleryService extends HttpService {
     const api = this.api + "gallery/folders";
     return this.post(folderData, api);
   }
+  
+  updateFolder(id, data) {
+    const api = this.api + `gallery/folders/${id}`
+    return this.put(data, api)
+  }
 
   async uploadPhoto(formData) {
     const api = this.api + "gallery/upload";

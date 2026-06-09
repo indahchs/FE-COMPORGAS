@@ -21,18 +21,6 @@
               placeholder="Catalog"
             ></v-text-field>
           </v-col>
-          <!-- <v-col cols="12">
-            <label class="required">Lokasi Kantor</label>
-            <v-select
-              dense
-              v-model.trim="$v.location.$model"
-              :error-messages="getErrors('location', $v.location)"
-              @blur="$v.location.$touch()"
-              :items="locationData"
-              outlined
-              placeholder="Lokasi Kantor"
-            ></v-select>
-          </v-col> -->
           <v-col cols="12">
             <label class="required">SLA Days</label>
             <v-text-field
@@ -117,35 +105,6 @@
       >SAVE</v-btn
     >
     <v-card class="mt-6 border-card">
-      <!-- <v-card-text
-        ><v-row>
-          <v-col cols="12">
-            <label>PIC</label>
-            <v-autocomplete
-              dense
-              v-model="pic"
-              return-object
-              :items="picData"
-              outlined
-              :append-icon="!isData ? icons.mdiPlus : ''"
-              placeholder="PIC"
-              @click:append="addPic"
-            ></v-autocomplete>
-          </v-col>
-          <v-list style="width: 100%" lines="one">
-            <v-list-item v-for="(item, id) in dataPic" :key="id">
-              <v-text-field readonly v-model="item.text">
-                <template v-slot:append>
-                  <v-switch v-model="item.active"></v-switch>
-                  <v-icon color="#EC323F">{{
-                    icons.mdiCloseBox
-                  }}</v-icon></template
-                ></v-text-field
-              >
-            </v-list-item>
-          </v-list>
-        </v-row></v-card-text
-      > -->
       <v-card-title class="align-start">
         <h4>PIC</h4>
         <v-spacer></v-spacer>

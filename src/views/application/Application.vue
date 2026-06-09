@@ -738,9 +738,30 @@ export default {
     },
     
     async getAppsBsns() {
-      const res = await getApps.getAppsBsns();
-      const data = res.data.data;
-      this.businessApps = data;
+      const res = await getApps.getAppsBsns()
+      this.businessApps = this.transformApiData(res.data)
+    },
+    transformApiData(apiData) {
+      const content = apiData?.data
+      if (!Array.isArray(content)) return []
+      return content.map(division => ({
+        id:          division.id,
+        name:        division.name        || 'Unnamed Division',
+        description: division.description || '',
+        apps:        Array.isArray(division.apps)
+          ? division.apps.map(app => ({
+              id:          app.id,
+              name:        app.name        || 'Unnamed App',
+              description: app.description || '',
+              link:        app.link        || '',
+              imageUrl:    app.imageUrl    || '',
+              divisionId:  app.divisionId,
+              position:    app.position,
+              createdBy:   app.createdBy,
+              createdAt:   app.createdAt,
+            }))
+          : [],
+      }))
     },
   },
 };

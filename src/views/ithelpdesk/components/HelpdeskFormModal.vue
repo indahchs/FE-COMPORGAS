@@ -5,14 +5,7 @@
         <v-card-title>
           <v-row align="center">
             <v-col>
-              <div
-                style="
-                  font-size: 18px;
-                  line-height: 28px;
-                  font-weight: 600;
-                  color: #000000;
-                "
-              >
+              <div style="font-size: 18px; line-height: 28px; font-weight: 600; color: #000000;">
                 New Request
               </div>
             </v-col>
@@ -69,10 +62,6 @@
                   placeholder="Description"
                 ></v-textarea>
               </v-col>
-              <!--<v-col cols="12">
-                <label v-if="isNotes" class="required">Note</label>
-                <v-text-field v-if="isNotes" v-model="catalogNote" outlined disabled placeholder="Note"></v-text-field>
-              </v-col>-->
               <v-col cols="12">
                 <label class="required">Upload File</label>
                 <div v-if="isNotes" class="mt-4 font-weight-bold">

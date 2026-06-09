@@ -5,12 +5,7 @@
                 <v-card-title>
                     <v-row align="center">
                         <v-col>
-                            <div style="
-                  font-size: 18px;
-                  line-height: 28px;
-                  font-weight: 600;
-                  color: #000000;
-                ">
+                            <div style="font-size: 18px; line-height: 28px; font-weight: 600; color: #000000;">
                                 Review
                             </div>
                         </v-col>

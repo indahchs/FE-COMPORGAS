@@ -449,7 +449,6 @@ export default {
       allTickets: 0, assignedTickets: 0, progressTickets: 0,
       pendingTickets: 0, lateTickets: 0, solvedTickets: 0,
       yearOptions: [], titleHeader: "",
-      // SLA map: { catalogName -> total SLA hours }
       catalogSlaMap: {},
       headers: [
         { text: "Name", value: "userName" }, { text: "PIC", value: "picName" },

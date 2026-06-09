@@ -392,7 +392,7 @@ export default {
       currentPage: 0,
       totalPages: 0,
       totalElements: 0,
-      pageSize: 24,
+      pageSize: 18,
     }
   },
 
@@ -411,11 +411,11 @@ export default {
     },
 
     canUploadPhoto() {
-      return ['IT', 'IT_LEAD', 'SUPER', 'SEKRETARIS'].includes(this.userRole);
+      return ['IT', 'IT_LEAD', 'SUPER'].includes(this.userRole);
     },
 
     canDeletePhoto() {
-      return ['SUPER', 'SEKRETARIS'].includes(this.userRole);
+      return ['SUPER'].includes(this.userRole);
     },
 
     hasPreviousPhoto() {
@@ -932,7 +932,6 @@ export default {
         for (let i = 0; i < this.selectedFiles.length; i++) {
           const file = this.selectedFiles[i]
 
-          // SESUDAH
           this.uploadProgress.currentFile       = file
           this.uploadProgress.files[i].status   = 'uploading'
 

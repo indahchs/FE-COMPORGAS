@@ -93,10 +93,10 @@
 <script>
 import Swal from "sweetalert2";
 import { mdiChevronRight, mdiTrashCanOutline, mdiMagnify } from "@mdi/js";
-import ItHelpDeskService from "../../../services/ithelpdesk/itHelpDeskServices";
 import CreateCatalog from "./CreateCatalogFormModal.vue";
 import HelpdeskFormModal from "./HelpdeskFormModal.vue";
 import PageAddCatalog from "./PageAddCatalog.vue";
+import ItHelpDeskService from "../../../services/ithelpdesk/itHelpDeskServices";
 
 const getHelpDesk = ItHelpDeskService.build();
 export default {
@@ -121,7 +121,6 @@ export default {
       },
       headers: [
         { text: "Catalog", value: "name" },
-        // { text: "Lokasi Kantor", value: "officeLocationName" },
         { text: "Logo", value: "logo" },
         { text: "SLA Days", value: "slaDays" },
         { text: "SLA Hours", value: "slaHours" },
@@ -248,7 +247,6 @@ export default {
     },
     createCatalog() {
       this.openModalCatalog = true;
-      // this.isList = false;
     },
     openForm(id) {
       if (id) {

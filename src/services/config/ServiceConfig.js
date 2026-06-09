@@ -1,4 +1,6 @@
 import axios from 'axios'
+import StorageConfig from '../config/StorageConfig'
+import router from '../../router'
 
 const ServiceConfig = axios.create({
   timeout: 30000,
@@ -28,12 +30,13 @@ if (process.env.NODE_ENV === 'development') {
 
   // Tambah renspon API dengan interceptor
   ServiceConfig.interceptors.response.use(
-    function (response) {
-      return response
-    },
-    function (error) {
-      return Promise.reject(error)
-    },
+    response => response,
+    error => {
+      if (error.response.status === 401) {
+        StorageConfig.clearSession()
+        router.push('/login')
+      }
+    }
   )
 }
 

@@ -56,9 +56,7 @@ export default class HttpService extends BaseService {
   }
 
   static setHeader() {
-    ServiceConfig.defaults.headers.common[
-      "x-app-token"
-    ] = `${StorageConfig.getToken()}`;
+    ServiceConfig.defaults.headers.common["x-app-token"] = `${StorageConfig.getToken()}`;
     ServiceConfig.defaults.headers.common["Content-Type"] = "application/json";
     ServiceConfig.defaults.headers.common.Accept = "application/json";
   }
@@ -83,8 +81,7 @@ export default class HttpService extends BaseService {
 
   get(param = {}, url = "") {
     const api = url === "" ? this.api : url;
-    return this.http
-      .get(api, { params: param, data: {} })
+    return this.http.get(api, { params: param, data: {} })
       .then(this.constructor.then)
       .catch((e) => {
         if (e instanceof ErrorService) {
